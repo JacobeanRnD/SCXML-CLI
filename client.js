@@ -1,6 +1,8 @@
-var client = require("swagger-client");
+#!/usr/bin/env node
 
-var swagger = new client.SwaggerClient({
+var swaggerClient = require("swagger-client");
+
+var swagger = new swaggerClient.SwaggerClient({
   url: 'http://localhost:8002/smaas.json',
   success: function() {
 
