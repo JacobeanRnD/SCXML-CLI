@@ -72,8 +72,6 @@ program
     });
   });
 
-
-
 // scxml run <StateChartName> -n <InstanceId>
 // node client.js run test2
 // node client.js run test 2 -n testinstance
@@ -98,6 +96,22 @@ program
     }
   });
 
+// scxml send <InstanceId> <eventName> -d <data>
+// node client.js send t
+// node client.js send t somedata
+program
+  .command('send <InstanceId> <eventName>')
+  .description('Send an event to a statechart instance.')
+  .option("-d, --eventData [eventData]", "Specify an id for the instance")
+  .action(function(instanceId, eventName, options) {
+    swagger.apis.default.sendEvent({ StateChartName: instanceId.split('/')[0], InstanceId: instanceId.split('/')[1], Event: {name: eventName, data: options.eventData} }, {}, function (data) {
+      console.log('\u001b[32mEvent sent\u001b[0m:');
+      console.log('Current state:', data.headers.normalized['X-Configuration']);
+    }, function (data) {
+      logError('Error sending event', data.data.toString());
+    });
+  });
+
 function logError (message, obj) {
   //Beep sound
   console.log('\u0007');
@@ -105,13 +119,3 @@ function logError (message, obj) {
   if(message) console.log('\u001b[31mERROR\u001b[0m: ' + message + '\u001b[0m');
   if(obj) console.log(obj);
 }
-
-// swagger.apis.default.createInstance({ StateChartName: 'basic' }, function(data) {
-//   var instanceUrl = data.headers.normalized.Location;
-
-//   console.log(JSON.stringify(instanceUrl));
-
-//   swagger.apis.default.sendEvent({ StateChartName: 'basic', InstanceId: instanceUrl.split('/')[1], Event: {name: 't'} }, function(data) {
-//     console.log(JSON.stringify(data.data.toString()));
-//   });
-// });
