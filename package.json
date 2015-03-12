@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "commander": "^2.7.1",
     "swagger-client": "^2.1.10-M1"
   }
 }
