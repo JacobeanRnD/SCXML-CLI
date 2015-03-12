@@ -98,7 +98,7 @@ program
 
 // scxml send <InstanceId> <eventName> -d <data>
 // node client.js send t
-// node client.js send t somedata
+// node client.js send t -d somedata
 program
   .command('send <InstanceId> <eventName>')
   .description('Send an event to a statechart instance.')
