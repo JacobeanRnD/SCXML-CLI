@@ -15,7 +15,7 @@ function onSwaggerSuccess () {
   program.parse(process.argv);
 }
 
-// scxml create <foo.scxml>
+// scxml create <foo.scxml> -n <StateChartName>
 // node client.js create ./test1.scxml
 // node client.js create -n test2 ./test1.scxml
 program
@@ -70,6 +70,32 @@ program
     }, function (data) {
       logError('Error getting statechart list', data.data.toString());
     });
+  });
+
+
+
+// scxml run <StateChartName> -n <InstanceId>
+// node client.js run test2
+// node client.js run test 2 -n testinstance
+program
+  .command('run <StateChartName>')
+  .description('Create an instance with the statechart definition.')
+  .option("-n, --instanceId [instanceId]", "Specify an id for the instance")
+  .action(function(statechartname, options) {
+    function onInstanceSuccess (data) {
+      console.log('\u001b[32mInstance created\u001b[0m');
+      console.log('InstanceId:', data.headers.normalized.Location);
+    }
+
+    function onInstanceError (data) {
+      logError('Error on instance creation', data.data.toString());
+    }
+
+    if(options.instanceId) {
+      swagger.apis.default.createNamedInstance({ StateChartName: statechartname, InstanceId: options.instanceId }, { }, onInstanceSuccess, onInstanceError);
+    } else {
+      swagger.apis.default.createInstance({ StateChartName: statechartname }, { }, onInstanceSuccess, onInstanceError);
+    }
   });
 
 function logError (message, obj) {
