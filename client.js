@@ -44,6 +44,20 @@ program
     });
   });
 
+// scxml ls
+// node client.js ls
+program
+  .command('ls')
+  .description('Get list of all statechart definitions')
+  .action(function(options) {
+    swagger.apis.default.getStatechartDefinitions({}, {}, function (data) {
+      console.log('\u001b[32mStatechart list\u001b[0m:');
+      console.log(data.data.toString());
+    }, function (data) {
+      logError('Error getting statechart list', data.data.toString());
+    });
+  });
+
 function logError (message, obj) {
   //Beep sound
   console.log('\u0007');
@@ -52,31 +66,12 @@ function logError (message, obj) {
   if(obj) console.log(obj);
 }
 
-// function onSwaggerSuccess() {
-//     var definition = '<scxml  ' +
-//       '    name="basic" ' +
-//       '    datamodel="ecmascript" ' +
-//       '    xmlns="http://www.w3.org/2005/07/scxml" ' +
-//       '    version="1.0"> ' +
-//       '    <state id="a"> ' +
-//       '        <transition target="b" event="t"/> ' +
-//       '    </state> ' +
-//       '    <state id="b"> ' +
-//       '        <transition target="a" event="t"/> ' +
-//       '    </state> ' +
-//       '</scxml>';
+// swagger.apis.default.createInstance({ StateChartName: 'basic' }, function(data) {
+//   var instanceUrl = data.headers.normalized.Location;
 
-//     swagger.apis.default.createStatechartDefinition({ scxmlDefinition: definition }, { requestContentType: "application/xml" }, function(data) {
-//       console.log(JSON.stringify(data.headers.normalized.Location));
+//   console.log(JSON.stringify(instanceUrl));
 
-//       swagger.apis.default.createInstance({ StateChartName: 'basic' }, function(data) {
-//         var instanceUrl = data.headers.normalized.Location;
-
-//         console.log(JSON.stringify(instanceUrl));
-
-//         swagger.apis.default.sendEvent({ StateChartName: 'basic', InstanceId: instanceUrl.split('/')[1], Event: {name: 't'} }, function(data) {
-//           console.log(JSON.stringify(data.data.toString()));
-//         });
-//       });
-//     });
-//   }
+//   swagger.apis.default.sendEvent({ StateChartName: 'basic', InstanceId: instanceUrl.split('/')[1], Event: {name: 't'} }, function(data) {
+//     console.log(JSON.stringify(data.data.toString()));
+//   });
+// });
