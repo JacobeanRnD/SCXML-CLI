@@ -44,6 +44,20 @@ program
     });
   });
 
+// scxml cat <StatechartName>
+// node client.js cat test2
+program
+  .command('cat <name>')
+  .description('Get details of a statechart')
+  .action(function(statechartname, options) {
+    swagger.apis.default.getStatechartDefinition({ StateChartName: statechartname }, {}, function (data) {
+      console.log('\u001b[32mStatechart details\u001b[0m:');
+      console.log(data.data.toString());
+    }, function (data) {
+      logError('Error getting statechart detail', data.data.toString());
+    });
+  });
+
 // scxml ls
 // node client.js ls
 program
