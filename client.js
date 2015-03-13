@@ -2,16 +2,21 @@
 
 var program = require('commander'),
   fs = require('fs'),
-  swaggerClient = require("swagger-client");
+  swaggerClient = require("swagger-client"),
+  EventSource = require('eventsource');
 
 var swagger = new swaggerClient.SwaggerClient({
   url: 'http://localhost:8002/smaas.json',
   success: onSwaggerSuccess
 });
 
-function onSwaggerSuccess () {
-  console.log('REST api swaggerized');
+var apiUrl;
 
+function onSwaggerSuccess () {
+  apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
+
+  console.log('REST api swaggerized');
+  debugger;
   program.parse(process.argv);
 }
 
@@ -165,6 +170,63 @@ program
     }
   });
 
+// scxml subscribe <InstanceId>
+//or
+// scxml subscribe <StateChartName>
+// node client.js subscribe test2
+// node client.js subscribe test2/testinstance
+program
+  .command('subscribe <InstanceId>')
+  .description('Listen to changes on a statechart or an instance.')
+  .action(function(statechartnameOrInstanceId, options) {
+    var statechartname = statechartnameOrInstanceId.split('/')[0],
+      instanceId = statechartnameOrInstanceId.split('/')[1];
+
+    if(instanceId) {
+      var api = swagger.apisArray[0].operationsArray.filter(function (api) {
+        return api.nickname === 'getInstanceChanges';
+      })[0];
+
+      var instanceChangesUrl = apiUrl + api.path.replace('{StateChartName}', statechartname).replace('{InstanceId}', instanceId);
+      var es = new EventSource(instanceChangesUrl);
+
+      es.addEventListener('subscribed', function () {
+        console.log('\u001b[32mStarted listening to instance changes\u001b[0m');
+      }, false);
+
+      es.addEventListener('onEntry', function (e) {
+        console.log(e.type, '-', e.data);
+      }, false);
+      es.addEventListener('onExit', function (e) {
+        console.log(e.type, '-', e.data);
+      }, false);
+
+      es.onerror = function (error) {
+        logError('Error listening to the instance', error);
+        process.exit(1);
+      };
+    } else {
+      var api = swagger.apisArray[0].operationsArray.filter(function (api) {
+        return api.nickname === 'getStatechartDefinitionChanges';
+      })[0];
+
+      var statechartChangesUrl = apiUrl + api.path.replace('{StateChartName}', statechartname);
+      var es = new EventSource(statechartChangesUrl);
+
+      es.addEventListener('subscribed', function () {
+        console.log('\u001b[32mStarted listening to statechart changes\u001b[0m');
+      }, false);
+
+      es.addEventListener('onChange', function () {
+        console.log('\u001b[32mStatechart changed\u001b[0m');
+      }, false);
+
+      es.onerror = function (error) {
+        logError('Error listening to the statechart', error);
+        process.exit(1);
+      };
+    }
+  });
 function logError (message, obj) {
   //Beep sound
   console.log('\u0007');
