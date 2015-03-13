@@ -59,18 +59,28 @@ program
     });
   });
 
-// scxml ls
+// scxml ls [StateChartName]
 // node client.js ls
+// node client.js ls test2
 program
-  .command('ls')
-  .description('Get list of all statechart definitions')
-  .action(function(options) {
-    swagger.apis.default.getStatechartDefinitions({}, {}, function (data) {
-      console.log('\u001b[32mStatechart list\u001b[0m:');
-      console.log(data.data.toString());
-    }, function (data) {
-      logError('Error getting statechart list', data.data.toString());
-    });
+  .command('ls [StateChartName]')
+  .description('Get list of all statechart definitions or instances')
+  .action(function(statechartname, options) {
+    if(statechartname) {
+      swagger.apis.default.getInstances({ StateChartName: statechartname }, {}, function (data) {
+        console.log('\u001b[32mInstance list\u001b[0m:');
+        console.log(data.data.toString());
+      }, function (data) {
+        logError('Error getting instance list', data.data.toString());
+      });
+    } else {
+      swagger.apis.default.getStatechartDefinitions({}, {}, function (data) {
+        console.log('\u001b[32mStatechart list\u001b[0m:');
+        console.log(data.data.toString());
+      }, function (data) {
+        logError('Error getting statechart list', data.data.toString());
+      });
+    }
   });
 
 // scxml run <StateChartName> -n <InstanceId>
