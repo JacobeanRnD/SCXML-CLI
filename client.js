@@ -30,6 +30,7 @@ program
 
       function onChartSuccess (data) {
         console.log('\u001b[32mStatechart created\u001b[0m');
+        console.log('StateChartName:', data.headers.normalized.Location);
       }
 
       function onChartError (data) {
