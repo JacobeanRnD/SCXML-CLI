@@ -10,7 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "commander": "^2.7.1",
+    "ejs": "^2.3.1",
     "eventsource": "^0.1.6",
+    "globwatcher": "^1.4.0",
+    "open": "0.0.5",
     "swagger-client": "^2.1.10-M1"
   }
 }

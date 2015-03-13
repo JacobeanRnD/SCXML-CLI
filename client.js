@@ -219,6 +219,19 @@ program
     }
   });
 
+
+// scxml viz <InstanceId>
+// node client.js viz test2/testinstance
+program
+  .command('viz <InstanceId>')
+  .description('Open realtime visualization of the instance.')
+  .option("-w, --watch", "Watch the scxml file for changes auto reload visualization")
+  .option("-i, --interactive", "Starts interactive repl shell on the CLI")
+  .action(function(instanceId, options) {
+    
+
+  });
+
 function logSuccess (message, obj) {
   if(message) console.log('\u001b[32m' + message + '\u001b[0m');
   if(obj) console.log(obj);
