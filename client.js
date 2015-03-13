@@ -46,17 +46,32 @@ program
   });
 
 // scxml cat <StatechartName>
+//or
+// scxml cat <InstanceId>
 // node client.js cat test2
+// node client.js cat test2/testinstance
 program
-  .command('cat <name>')
+  .command('cat <InstanceId>')
   .description('Get details of a statechart')
-  .action(function(statechartname, options) {
-    swagger.apis.default.getStatechartDefinition({ StateChartName: statechartname }, {}, function (data) {
-      console.log('\u001b[32mStatechart details\u001b[0m:');
-      console.log(data.data.toString());
-    }, function (data) {
-      logError('Error getting statechart detail', data.data.toString());
-    });
+  .action(function(statechartnameOrInstanceId, options) {
+    var statechartname = statechartnameOrInstanceId.split('/')[0],
+      instanceId = statechartnameOrInstanceId.split('/')[1];
+
+    if(instanceId) {
+      swagger.apis.default.getInstance({ StateChartName: statechartname, InstanceId: instanceId }, {}, function (data) {
+        console.log('\u001b[32mInstance details\u001b[0m:');
+        console.log(data.data.toString());
+      }, function (data) {
+        logError('Error getting instance detail', data.data.toString());
+      });
+    } else {
+      swagger.apis.default.getStatechartDefinition({ StateChartName: statechartname }, {}, function (data) {
+        console.log('\u001b[32mStatechart details\u001b[0m:');
+        console.log(data.data.toString());
+      }, function (data) {
+        logError('Error getting statechart detail', data.data.toString());
+      });
+    }
   });
 
 // scxml ls [StateChartName]
