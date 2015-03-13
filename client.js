@@ -15,8 +15,6 @@ var apiUrl;
 function onSwaggerSuccess () {
   apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
 
-  console.log('REST api swaggerized');
-  debugger;
   program.parse(process.argv);
 }
 
@@ -34,8 +32,7 @@ program
       }
 
       function onChartSuccess (data) {
-        console.log('\u001b[32mStatechart created\u001b[0m');
-        console.log('StateChartName:', data.headers.normalized.Location);
+        logSuccess('Statechart created, StateChartName:', data.headers.normalized.Location);
       }
 
       function onChartError (data) {
@@ -64,15 +61,13 @@ program
 
     if(instanceId) {
       swagger.apis.default.getInstance({ StateChartName: statechartname, InstanceId: instanceId }, {}, function (data) {
-        console.log('\u001b[32mInstance details\u001b[0m:');
-        console.log(data.data.toString());
+        logSuccess('Instance details:', data.data.toString());
       }, function (data) {
         logError('Error getting instance detail', data.data.toString());
       });
     } else {
       swagger.apis.default.getStatechartDefinition({ StateChartName: statechartname }, {}, function (data) {
-        console.log('\u001b[32mStatechart details\u001b[0m:');
-        console.log(data.data.toString());
+        logSuccess('Statechart details:', data.data.toString());
       }, function (data) {
         logError('Error getting statechart detail', data.data.toString());
       });
@@ -88,15 +83,13 @@ program
   .action(function(statechartname, options) {
     if(statechartname) {
       swagger.apis.default.getInstances({ StateChartName: statechartname }, {}, function (data) {
-        console.log('\u001b[32mInstance list\u001b[0m:');
-        console.log(data.data.toString());
+        logSuccess('Instance list:', data.data.toString());
       }, function (data) {
         logError('Error getting instance list', data.data.toString());
       });
     } else {
       swagger.apis.default.getStatechartDefinitions({}, {}, function (data) {
-        console.log('\u001b[32mStatechart list\u001b[0m:');
-        console.log(data.data.toString());
+        logSuccess('Statechart list:', data.data.toString());
       }, function (data) {
         logError('Error getting statechart list', data.data.toString());
       });
@@ -112,8 +105,7 @@ program
   .option("-n, --instanceId [instanceId]", "Specify an id for the instance")
   .action(function(statechartname, options) {
     function onInstanceSuccess (data) {
-      console.log('\u001b[32mInstance created\u001b[0m');
-      console.log('InstanceId:', data.headers.normalized.Location);
+      logSuccess('Instance created, InstanceId:', data.headers.normalized.Location);
     }
 
     function onInstanceError (data) {
@@ -136,8 +128,7 @@ program
   .option("-d, --eventData [eventData]", "Specify an id for the instance")
   .action(function(instanceId, eventName, options) {
     swagger.apis.default.sendEvent({ StateChartName: instanceId.split('/')[0], InstanceId: instanceId.split('/')[1], Event: {name: eventName, data: options.eventData} }, {}, function (data) {
-      console.log('\u001b[32mEvent sent\u001b[0m:');
-      console.log('Current state:', data.headers.normalized['X-Configuration']);
+      logSuccess('Event sent, Current state:', data.headers.normalized['X-Configuration']);
     }, function (data) {
       logError('Error sending event', data.data.toString());
     });
@@ -157,13 +148,13 @@ program
 
     if(instanceId) {
       swagger.apis.default.deleteInstance({ StateChartName: statechartname, InstanceId: instanceId }, {}, function (data) {
-        console.log('\u001b[32mDeleted instance \u001b[0m');
+        logSuccess('Deleted instance');
       }, function (data) {
         logError('Error deleting instance', data.data.toString());
       });
     } else {
       swagger.apis.default.deleteStatechartDefinition({ StateChartName: statechartname }, {}, function (data) {
-        console.log('\u001b[32mDeleted statechart and it\'s children \u001b[0m');
+        logSuccess('Deleted statechart and it\'s children');
       }, function (data) {
         logError('Error deleting statechart', data.data.toString());
       });
@@ -191,7 +182,7 @@ program
       var es = new EventSource(instanceChangesUrl);
 
       es.addEventListener('subscribed', function () {
-        console.log('\u001b[32mStarted listening to instance changes\u001b[0m');
+        logSuccess('Started listening to instance changes');
       }, false);
 
       es.addEventListener('onEntry', function (e) {
@@ -214,7 +205,7 @@ program
       var es = new EventSource(statechartChangesUrl);
 
       es.addEventListener('subscribed', function () {
-        console.log('\u001b[32mStarted listening to statechart changes\u001b[0m');
+        logSuccess('Started listening to statechart changes');
       }, false);
 
       es.addEventListener('onChange', function () {
@@ -227,10 +218,16 @@ program
       };
     }
   });
+
+function logSuccess (message, obj) {
+  if(message) console.log('\u001b[32m' + message + '\u001b[0m');
+  if(obj) console.log(obj);
+}
+
 function logError (message, obj) {
   //Beep sound
   console.log('\u0007');
 
-  if(message) console.log('\u001b[31mERROR\u001b[0m: ' + message + '\u001b[0m');
+  if(message) console.log('\u001b[31mERROR\u001b[0m: ' + message);
   if(obj) console.log(obj);
 }
