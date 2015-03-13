@@ -113,6 +113,33 @@ program
     });
   });
 
+// scxml rm <InstanceId>
+//or
+// scxml rm <StateChartName>
+// node client.js rm test2
+// node client.js rm test2/testinstance
+program
+  .command('rm <InstanceId>')
+  .description('Remove a statechart or an instance.')
+  .action(function(statechartnameOrInstanceId, options) {
+    var statechartname = statechartnameOrInstanceId.split('/')[0],
+      instanceId = statechartnameOrInstanceId.split('/')[1];
+
+    if(instanceId) {
+      swagger.apis.default.deleteInstance({ StateChartName: statechartname, InstanceId: instanceId }, {}, function (data) {
+        console.log('\u001b[32mDeleted instance \u001b[0m');
+      }, function (data) {
+        logError('Error deleting instance', data.data.toString());
+      });
+    } else {
+      swagger.apis.default.deleteStatechartDefinition({ StateChartName: statechartname }, {}, function (data) {
+        console.log('\u001b[32mDeleted statechart and it\'s children \u001b[0m');
+      }, function (data) {
+        logError('Error deleting statechart', data.data.toString());
+      });
+    }
+  });
+
 function logError (message, obj) {
   //Beep sound
   console.log('\u0007');
