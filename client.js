@@ -5,6 +5,8 @@ var program = require('commander'),
   swaggerClient = require("swagger-client"),
   EventSource = require('eventsource');
 
+var suffix = '.scxml';
+
 var swagger = new swaggerClient.SwaggerClient({
   url: 'http://localhost:8002/smaas.json',
   success: onSwaggerSuccess
@@ -24,8 +26,15 @@ function onSwaggerSuccess () {
 program
   .command('save <path>')
   .description('Save or update a state machine definition.')
-  .option("-n, --statechartname [name]", "Specify a name for the state machine definition")
+  .option("-n, --statechartname [name.scxml]", "Specify a name for the state machine definition")
   .action(function(path, options) {
+    // if(path.indexOf(suffix, path.length - suffix.length) === -1) {
+    //   logError('Please add ".scxml" suffix on your file.', path);
+    //   process.exit(1);
+    // }
+
+    
+
     fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
       if (err) {
         logError('Error reading file', err);
