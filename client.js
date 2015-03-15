@@ -40,9 +40,9 @@ program
       }
 
       if(options.statechartname) {
-        swagger.apis.default.createOrUpdateStatechartDefinition({ scxmlDefinition: definition, StateChartName: options.statechartname }, { requestContentType: "application/xml" }, onChartSuccess, onChartError);
+        swagger.apis.default.createOrUpdateStatechartDefinition({ parameterContentType: "application/xml", scxmlDefinition: definition, StateChartName: options.statechartname }, { requestContentType: "application/xml" }, onChartSuccess, onChartError);
       } else {
-        swagger.apis.default.createStatechartDefinition({ scxmlDefinition: definition }, { requestContentType: "application/xml" }, onChartSuccess, onChartError);
+        swagger.apis.default.createStatechartDefinition({ parameterContentType: "application/xml", scxmlDefinition: definition }, { requestContentType: "application/xml" }, onChartSuccess, onChartError);
       }
     });
   });
