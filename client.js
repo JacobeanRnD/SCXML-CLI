@@ -47,13 +47,13 @@ program
     });
   });
 
-// scxml cat <StatechartName>
+// scxml inspect <StatechartName>
 //or
-// scxml cat <InstanceId>
-// node client.js cat test2
-// node client.js cat test2/testinstance
+// scxml inspect <InstanceId>
+// node client.js inspect test2
+// node client.js inspect test2/testinstance
 program
-  .command('cat <StatechartNameOrInstanceId>')
+  .command('inspect <StatechartNameOrInstanceId>')
   .description('Get details of a statechart or an instance')
   .action(function(statechartnameOrInstanceId, options) {
     var statechartname = statechartnameOrInstanceId.split('/')[0],
