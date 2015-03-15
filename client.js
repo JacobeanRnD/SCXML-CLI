@@ -189,6 +189,7 @@ program
   .description('Start REPL interface to send events to a statechart instance.')
   .action(function(instanceId, options) {
     repl.start('scxml >', process.stdin, function (cmd, context, filename, callback) {
+      cmd = 't\n';
       var event;
 
       if(cmd[0] === '@') {
@@ -372,19 +373,24 @@ program
   .command('testevent <instanceid>')
   .description('TODO: DELETE')
   .action(function(instanceId){
-    send();
-    function send () {
-      sent++;
 
+    var event = { name: 't'};
+    sendEvent();
+
+    function sendEvent() {
+      sent++;
+      console.log('Sending event', event);
       swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
                                         InstanceId: instanceId.split('/')[1],
-                                        Event: { name: 't'} }, {}, function (data) {
-        
+                                        Event: event }, {}, function (data) {
+        logSuccess('Sent event:', event);
         received++;
-        setTimeout(send, 5);
+        console.log(data.headers.normalized['X-Configuration']);
         console.log(sent, received);
+        setTimeout(sendEvent, 5);
       }, function (data) {
         logError('Error sending event', data.data.toString());
+        process.exit(1);
       });
     }
   });
