@@ -233,9 +233,17 @@ program
   });
 
 program
+  .command('help')
+  .description('Print out help')
+  .action(function(env){
+    program.outputHelp();
+  });
+
+program
   .command('*')
   .description('Print out help')
   .action(function(env){
+    logError('Unrecognized command');
     program.outputHelp();
   });
 
