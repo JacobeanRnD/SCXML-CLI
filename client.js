@@ -3,6 +3,7 @@
 var program = require('commander'),
   fs = require('fs'),
   open = require('open'),
+  globwatcher = require('globwatcher').globwatcher,
   swaggerClient = require("swagger-client"),
   EventSource = require('eventsource');
 
@@ -29,13 +30,20 @@ program
   .description('Save or update a state machine definition.')
   .option("-n, --statechartname [name.scxml]", "Specify a name for the state machine definition")
   .action(function(path, options) {
-    // if(path.indexOf(suffix, path.length - suffix.length) === -1) {
-    //   logError('Please add ".scxml" suffix on your file.', path);
-    //   process.exit(1);
+    
+
+    // var scxmlPath = options.path;
+
+    // if(scxmlPath) {
+    //   //Watch scxml file
+    //   globwatcher(scxmlPath).on('changed', function() {
+    //     console.log('\n\u001b[35mChanged SCXML\u001b[0m: ' + scxmlPath + '\u001b[0m');
+
+    //     //Save the scxml
+
+    //   });
     // }
-
-
-
+    
     fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
       if (err) {
         logError('Error reading file', err);
@@ -233,12 +241,11 @@ program
 // scxml viz <InstanceId>
 // node client.js viz test2/testinstance
 program
-  .command('viz <InstanceId>')
-  .description('Open realtime visualization of the instance.')
-  .option("-w, --watch", "Watch the scxml file for changes auto reload visualization")
-  .option("-i, --interactive", "Starts interactive repl shell on the CLI")
-  .action(function(instanceId, options) {
-    open(apiUrl + '/' + instanceId + '/_viz');
+  .command('viz <StatechartNameOrInstanceId>')
+  .description('Open visualization of the statechart or realtime visualization of the instance.')
+  .option("-w, --watch [path]", "Watch the scxml file for changes.")
+  .action(function(statechartnameOrInstanceId, options) {
+    open(apiUrl + '/' + statechartnameOrInstanceId + '/_viz');
   });
 
 program
