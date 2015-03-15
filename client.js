@@ -2,6 +2,7 @@
 
 var program = require('commander'),
   fs = require('fs'),
+  open = require('open'),
   swaggerClient = require("swagger-client"),
   EventSource = require('eventsource');
 
@@ -33,7 +34,7 @@ program
     //   process.exit(1);
     // }
 
-    
+
 
     fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
       if (err) {
@@ -237,8 +238,7 @@ program
   .option("-w, --watch", "Watch the scxml file for changes auto reload visualization")
   .option("-i, --interactive", "Starts interactive repl shell on the CLI")
   .action(function(instanceId, options) {
-    
-
+    open(apiUrl + '/' + instanceId + '/_viz');
   });
 
 program
