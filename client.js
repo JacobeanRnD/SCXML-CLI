@@ -3,6 +3,7 @@
 var program = require('commander'),
   fs = require('fs'),
   open = require('open'),
+  parseString = require('xml2js').parseString,
   globwatcher = require('globwatcher').globwatcher,
   swaggerClient = require("swagger-client"),
   EventSource = require('eventsource');
@@ -30,38 +31,32 @@ program
   .description('Save or update a state machine definition.')
   .option("-n, --statechartname [name.scxml]", "Specify a name for the state machine definition")
   .action(function(path, options) {
-    
-
-    // var scxmlPath = options.path;
-
-    // if(scxmlPath) {
-    //   //Watch scxml file
-    //   globwatcher(scxmlPath).on('changed', function() {
-    //     console.log('\n\u001b[35mChanged SCXML\u001b[0m: ' + scxmlPath + '\u001b[0m');
-
-    //     //Save the scxml
-
-    //   });
-    // }
-    
     fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
       if (err) {
         logError('Error reading file', err);
+        process.exit(1);
       }
 
-      function onChartSuccess (data) {
-        logSuccess('Statechart saved, StateChartName:', data.headers.normalized.Location);
-      }
+      parseString(definition, function (err, result) {
+        if (err) {
+          logError('Error reading file', err);
+          process.exit(1);
+        }
 
-      function onChartError (data) {
-        logError('Error saving statechart', data.data.toString());
-      }
+        var fileNameArray = path.split('/');
 
-      if(options.statechartname) {
-        swagger.apis.default.createOrUpdateStatechartDefinition({ parameterContentType: "application/xml", scxmlDefinition: definition, StateChartName: options.statechartname }, { requestContentType: "application/xml" }, onChartSuccess, onChartError);
-      } else {
-        swagger.apis.default.createStatechartDefinition({ parameterContentType: "application/xml", scxmlDefinition: definition }, { requestContentType: "application/xml" }, onChartSuccess, onChartError);
-      }
+        var name = options.statechartname || result.scxml['$'].name || fileNameArray[fileNameArray.length - 1];
+        name = name.indexOf('.scxml') === -1 ? (name + '.scxml') : name;
+
+        swagger.apis.default.createOrUpdateStatechartDefinition({ parameterContentType: "application/xml",
+                                                                  scxmlDefinition: definition,
+                                                                  StateChartName: name },
+                                                                { requestContentType: "application/xml" }, function (data) {
+                                                                  logSuccess('Statechart saved, StateChartName:', data.headers.normalized.Location);
+                                                                }, function (data) {
+                                                                  logError('Error saving statechart', data.data.toString());
+                                                                });
+      });
     });
   });
 
@@ -236,7 +231,6 @@ program
       };
     }
   });
-
 
 // scxml viz <InstanceId>
 // node client.js viz test2/testinstance
