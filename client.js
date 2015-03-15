@@ -366,6 +366,30 @@ program
     program.outputHelp();
   });
 
+var sent = 0,
+  received = 0;
+program
+  .command('testevent <instanceid>')
+  .description('TODO: DELETE')
+  .action(function(instanceId){
+    send();
+    function send () {
+      sent++;
+
+      swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
+                                        InstanceId: instanceId.split('/')[1],
+                                        Event: { name: 't'} }, {}, function (data) {
+        
+        received++;
+        setTimeout(send, 5);
+        console.log(sent, received);
+      }, function (data) {
+        logError('Error sending event', data.data.toString());
+      });
+    }
+  });
+
+
 function logSuccess (message, obj) {
   if(message) console.log('\u001b[32m' + message + '\u001b[0m');
   if(obj) console.log(obj);
