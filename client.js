@@ -22,6 +22,11 @@ function onSwaggerSuccess () {
   apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
 
   program.parse(process.argv);
+
+  if (process.argv.length <= 2) {
+    logError('Unrecognized command');
+    program.outputHelp();
+  }
 }
 
 // scxml save <foo.scxml> -n <StateChartName>
@@ -161,26 +166,94 @@ program
     });
   });
 
+
+var parseNodeTen = function (cmd) {
+  var e = cmd.split(/\((.*)\n\)/)[1].split(/ +/);
+  return { name: e[0], data: e[1] };
+}
+var parseNodeTwelve = function (cmd) {
+  var e = cmd.split(/[\n\r]/g)[0].split(/ +/);
+  return { name: e[0], data: e[1] };
+}
+
+var parseRE = process.version.indexOf('v0.12') === 0 ? parseNodeTwelve : parseNodeTen;
+
 // scxml interact <InstanceId>
 // node client.js interact test2/testinstance
+//scxml > t
+//scxml > t { "test": "test"}
+//scxml > t @eventData.json
+//scxml > @event.json
 program
   .command('interact <InstanceId>')
   .description('Start REPL interface to send events to a statechart instance.')
   .action(function(instanceId, options) {
     repl.start('scxml >', process.stdin, function (cmd, context, filename, callback) {
-      cmd = cmd.replace('\n', '');
-      var event = { name: cmd.split(' ')[0], data: cmd.split(' ')[1] };
+      var event;
 
-      console.log('Sending event');
-      swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
-                                        InstanceId: instanceId.split('/')[1],
-                                        Event: event }, {}, function (data) {
-        logSuccess('Sent event:', event);
-        callback(null, data.headers.normalized['X-Configuration']);
-      }, function (data) {
-        logError('Error sending event', data.data.toString());
-        process.exit(1);
-      });
+      if(cmd[0] === '@') {
+        //event: @data_file.json
+        var eventFilename = cmd.split(/[\n\r]/g)[0].substring(1, cmd.length);
+
+        readJSONFile(eventFilename, function (eventData) {
+            event = eventData;
+            sendEvent();
+        });
+      } else {
+        event = parseRE(cmd);
+
+        if(event.data) {
+          if(event.data[0] === '@') {
+            //event: name @data_file.json
+            var dataFilename = event.data.substring(1, event.data.length);
+
+            readJSONFile(dataFilename, function (eventData) {
+                event.data = eventData;
+                sendEvent();
+            });
+          } else {
+            //event: name arbitrary_data
+            try {
+              event.data = JSON.parse(event.data);
+              sendEvent();
+            } catch(err) {
+              logError('Error parsing JSON data', err);
+            }
+          }
+        } else {
+          //event: name
+          sendEvent();
+        }
+      }
+
+      function readJSONFile (path, done) {
+        fs.readFile(path, { encoding: 'utf-8' }, function (err, data) {
+          if (err) {
+            logError('Error reading file', err);
+          }
+
+          try {
+            data = JSON.parse(data);
+          } catch(err) {
+            logError('Error parsing JSON file', err);
+          }
+
+          done(data);
+        });
+      }
+
+      function sendEvent() {
+        console.log('Sending event', event);
+        swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
+                                          InstanceId: instanceId.split('/')[1],
+                                          Event: event }, {}, function (data) {
+          logSuccess('Sent event:', event);
+          callback(null, data.headers.normalized['X-Configuration']);
+        }, function (data) {
+          logError('Error sending event', data.data.toString());
+          process.exit(1);
+        });
+      }
     });
   });
 
