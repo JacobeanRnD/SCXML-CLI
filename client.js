@@ -3,6 +3,7 @@
 var program = require('commander'),
   fs = require('fs'),
   open = require('open'),
+  repl = require('repl'),
   parseString = require('xml2js').parseString,
   globwatcher = require('globwatcher').globwatcher,
   swaggerClient = require("swagger-client"),
@@ -144,17 +145,42 @@ program
   });
 
 // scxml send <InstanceId> <eventName> -d <data>
-// node client.js send t
-// node client.js send t -d somedata
+// node client.js send test2/testinstance t
+// node client.js send test2/testinstance t -d somedata
 program
   .command('send <InstanceId> <eventName>')
   .description('Send an event to a statechart instance.')
   .option("-d, --eventData [eventData]", "Specify an id for the instance")
   .action(function(instanceId, eventName, options) {
-    swagger.apis.default.sendEvent({ StateChartName: instanceId.split('/')[0], InstanceId: instanceId.split('/')[1], Event: {name: eventName, data: options.eventData} }, {}, function (data) {
+    swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
+                                      InstanceId: instanceId.split('/')[1],
+                                      Event: { name: eventName, data: options.eventData } }, {}, function (data) {
       logSuccess('Event sent, Current state:', data.headers.normalized['X-Configuration']);
     }, function (data) {
       logError('Error sending event', data.data.toString());
+    });
+  });
+
+// scxml interact <InstanceId>
+// node client.js interact test2/testinstance
+program
+  .command('interact <InstanceId>')
+  .description('Start REPL interface to send events to a statechart instance.')
+  .action(function(instanceId, options) {
+    repl.start('scxml >', process.stdin, function (cmd, context, filename, callback) {
+      cmd = cmd.replace('\n', '');
+      var event = { name: cmd.split(' ')[0], data: cmd.split(' ')[1] };
+
+      console.log('Sending event');
+      swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
+                                        InstanceId: instanceId.split('/')[1],
+                                        Event: event }, {}, function (data) {
+        logSuccess('Sent event:', event);
+        callback(null, data.headers.normalized['X-Configuration']);
+      }, function (data) {
+        logError('Error sending event', data.data.toString());
+        process.exit(1);
+      });
     });
   });
 
