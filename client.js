@@ -18,12 +18,12 @@ function onSwaggerSuccess () {
   program.parse(process.argv);
 }
 
-// scxml create <foo.scxml> -n <StateChartName>
-// node client.js create ./test1.scxml
-// node client.js create -n test2 ./test1.scxml
+// scxml save <foo.scxml> -n <StateChartName>
+// node client.js save ./test1.scxml
+// node client.js save -n test2 ./test1.scxml
 program
-  .command('create <path>')
-  .description('Create or update a state machine definition.')
+  .command('save <path>')
+  .description('Save or update a state machine definition.')
   .option("-n, --statechartname [name]", "Specify a name for the state machine definition")
   .action(function(path, options) {
     fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
@@ -32,11 +32,11 @@ program
       }
 
       function onChartSuccess (data) {
-        logSuccess('Statechart created, StateChartName:', data.headers.normalized.Location);
+        logSuccess('Statechart saved, StateChartName:', data.headers.normalized.Location);
       }
 
       function onChartError (data) {
-        logError('Error on statechart creation', data.data.toString());
+        logError('Error saving statechart', data.data.toString());
       }
 
       if(options.statechartname) {
@@ -53,8 +53,8 @@ program
 // node client.js cat test2
 // node client.js cat test2/testinstance
 program
-  .command('cat <InstanceId>')
-  .description('Get details of a statechart')
+  .command('cat <StatechartNameOrInstanceId>')
+  .description('Get details of a statechart or an instance')
   .action(function(statechartnameOrInstanceId, options) {
     var statechartname = statechartnameOrInstanceId.split('/')[0],
       instanceId = statechartnameOrInstanceId.split('/')[1];
@@ -140,7 +140,7 @@ program
 // node client.js rm test2
 // node client.js rm test2/testinstance
 program
-  .command('rm <InstanceId>')
+  .command('rm <StatechartNameOrInstanceId>')
   .description('Remove a statechart or an instance.')
   .action(function(statechartnameOrInstanceId, options) {
     var statechartname = statechartnameOrInstanceId.split('/')[0],
@@ -167,7 +167,7 @@ program
 // node client.js subscribe test2
 // node client.js subscribe test2/testinstance
 program
-  .command('subscribe <InstanceId>')
+  .command('subscribe <StatechartNameOrInstanceId>')
   .description('Listen to changes on a statechart or an instance.')
   .action(function(statechartnameOrInstanceId, options) {
     var statechartname = statechartnameOrInstanceId.split('/')[0],
