@@ -232,6 +232,13 @@ program
 
   });
 
+program
+  .command('*')
+  .description('Print out help')
+  .action(function(env){
+    program.outputHelp();
+  });
+
 function logSuccess (message, obj) {
   if(message) console.log('\u001b[32m' + message + '\u001b[0m');
   if(obj) console.log(obj);
