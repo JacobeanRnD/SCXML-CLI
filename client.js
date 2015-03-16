@@ -375,6 +375,25 @@ program
     open(apiUrl + '/' + statechartnameOrInstanceId + '/_viz');
   });
 
+// scxml log <InstanceId>
+// node client.js log test2/testinstance
+program
+  .command('log <InstanceId>')
+  .description('Get all events of the instance.')
+  .option("-H, --host <host>", "Change server host")
+  .action(function(instanceId, options) {
+    if(options.host) changeSwaggerHost(options.host);
+
+    var statechartname = instanceId.split('/')[0],
+      instanceId = instanceId.split('/')[1];
+
+    swagger.apis.default.getEventLog({ StateChartName: statechartname, InstanceId: instanceId }, {}, function (data) {
+      logSuccess('Event log:', JSON.parse(data.data.toString()));
+    }, function (data) {
+      logError('Error deleting statechart', data.data.toString());
+    });
+  });
+
 program
   .command('help')
   .description('Print out help')
