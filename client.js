@@ -189,7 +189,6 @@ program
   .description('Start REPL interface to send events to a statechart instance.')
   .action(function(instanceId, options) {
     repl.start('scxml >', process.stdin, function (cmd, context, filename, callback) {
-      cmd = 't\n';
       var event;
 
       if(cmd[0] === '@') {
@@ -366,35 +365,6 @@ program
     logError('Unrecognized command');
     program.outputHelp();
   });
-
-var sent = 0,
-  received = 0;
-program
-  .command('testevent <instanceid>')
-  .description('TODO: DELETE')
-  .action(function(instanceId){
-
-    var event = { name: 't'};
-    sendEvent();
-
-    function sendEvent() {
-      sent++;
-      console.log('Sending event', event);
-      swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
-                                        InstanceId: instanceId.split('/')[1],
-                                        Event: event }, {}, function (data) {
-        logSuccess('Sent event:', event);
-        received++;
-        console.log(data.headers.normalized['X-Configuration']);
-        console.log(sent, received);
-        setTimeout(sendEvent, 5);
-      }, function (data) {
-        logError('Error sending event', data.data.toString());
-        process.exit(1);
-      });
-    }
-  });
-
 
 function logSuccess (message, obj) {
   if(message) console.log('\u001b[32m' + message + '\u001b[0m');
