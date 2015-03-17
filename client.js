@@ -89,7 +89,7 @@ program
           swagger.apis.default.createOrUpdateStatechartDefinition({ parameterContentType: "application/xml",
                                                                     scxmlDefinition: definition,
                                                                     StateChartName: name },
-                                                                  { requestContentType: "application/xml" }, function (data) {
+                                                                  { }, function (data) {
                                                                     logSuccess('Statechart saved, StateChartName:', data.headers.normalized.Location);
                                                                   }, function (data) {
                                                                     logError('Error saving statechart', data.data.toString());
