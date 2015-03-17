@@ -7,7 +7,8 @@ var program = require('commander'),
   parseString = require('xml2js').parseString,
   globwatcher = require('globwatcher').globwatcher,
   swaggerClient = require("swagger-client"),
-  EventSource = require('eventsource');
+  EventSource = require('eventsource'),
+  pathNode = require('path');
 
 var suffix = '.scxml';
 
@@ -81,9 +82,9 @@ program
             process.exit(1);
           }
 
-          var fileNameArray = path.split('/');
+          var fileName = pathNode.basename(path);
 
-          var name = options.statechartname || result.scxml['$'].name || fileNameArray[fileNameArray.length - 1];
+          var name = options.statechartname || result.scxml['$'].name || fileName;
           name = name.indexOf('.scxml') === -1 ? (name + '.scxml') : name;
 
           swagger.apis.default.createOrUpdateStatechartDefinition({ parameterContentType: "application/xml",
