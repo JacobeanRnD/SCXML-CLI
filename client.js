@@ -400,7 +400,13 @@ program
       instanceId = instanceId.split('/')[1];
 
     swagger.apis.default.getEventLog({ StateChartName: statechartname, InstanceId: instanceId }, {}, function (data) {
-      logSuccess('Event log:', JSON.parse(data.data.toString()));
+      
+      var eventLog = JSON.parse(data.data.toString());
+
+      logSuccess('Event log:');
+      eventLog.forEach(function (event) {
+        console.log(JSON.stringify(event, null, 0));
+      });
     }, function (data) {
       logError('Error deleting statechart', data.data.toString());
     });
