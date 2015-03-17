@@ -11,6 +11,30 @@ var program = require('commander'),
 
 var suffix = '.scxml';
 
+
+var parseNodeTenREPL = function (cmd) {
+  var e = cmd.split(/\((.*)\n\)/)[1].split(/ +/);
+  return { name: e[0], data: e[1] };
+}
+var parseNodeElevenREPL = function (cmd) {
+  var e = cmd.split(/[\n\r]/g)[0].split(/ +/);
+  return { name: e[0], data: e[1] };
+}
+
+var parseREPL;
+switch(process.version.substring(0, 5)) {
+  case 'v0.12':
+  case 'v0.11':
+    parseREPL = parseNodeElevenREPL;
+    break;
+  case 'v0.10':
+    parseREPL = parseNodeTenREPL;
+    break;
+  default:
+    logError('Node version is not supported', nodeVersion);
+    process.exit(1);
+}
+
 var swagger = new swaggerClient.SwaggerClient({
   url: 'http://localhost:8002/smaas.json',
   success: onSwaggerSuccess
@@ -176,18 +200,6 @@ program
     });
   });
 
-
-var parseNodeTen = function (cmd) {
-  var e = cmd.split(/\((.*)\n\)/)[1].split(/ +/);
-  return { name: e[0], data: e[1] };
-}
-var parseNodeTwelve = function (cmd) {
-  var e = cmd.split(/[\n\r]/g)[0].split(/ +/);
-  return { name: e[0], data: e[1] };
-}
-
-var parseRE = process.version.indexOf('v0.12') === 0 ? parseNodeTwelve : parseNodeTen;
-
 // scxml interact <InstanceId>
 // node client.js interact test2/testinstance
 //scxml > t
@@ -213,7 +225,7 @@ program
             sendEvent();
         });
       } else {
-        event = parseRE(cmd);
+        event = parseREPL(cmd);
 
         if(event.data) {
           if(event.data[0] === '@') {
