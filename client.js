@@ -263,11 +263,18 @@ program
   .option("-H, --host <host>", "Change server host")
   .action(function(instanceId, options) {
     if(options.host) changeSwaggerHost(options.host);
+    
+    repl.start({
+      prompt: "scxml >",
+      input: process.stdin,
+      output: process.stdout,
+      eval: runCommand
+    });
 
-    repl.start('scxml >', process.stdin, function (cmd, context, filename, callback) {
+    function runCommand (cmd, context, filename, callback) {
       var event = parseREPL(cmd);
       parseAndSendEvent(instanceId, event.name, event.data, callback);
-    });
+    }
   });
 
 // scxml rm <InstanceId>
