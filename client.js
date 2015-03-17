@@ -180,25 +180,76 @@ program
     }
   });
 
-// scxml send <InstanceId> <eventName> -d <data>
+// scxml send <InstanceId> <eventName> <data>
 // node client.js send test2/testinstance t
-// node client.js send test2/testinstance t -d somedata
+// node client.js send test2/testinstance t '{"test":"test"}'
+// node client.js send test2/testinstance t @eventData.json
+// node client.js send test2/testinstance @event.json
 program
-  .command('send <InstanceId> <eventName>')
+  .command('send <InstanceId> <eventName> [eventData]')
   .description('Send an event to a statechart instance.')
-  .option("-d, --eventData [eventData]", "Specify an id for the instance")
   .option("-H, --host <host>", "Change server host")
-  .action(function(instanceId, eventName, options) {
+  .action(function(instanceId, eventName, eventData, options) {
     if(options.host) changeSwaggerHost(options.host);
 
+    parseAndSendEvent(instanceId, eventName, eventData);
+  });
+
+function parseAndSendEvent(instanceId, eventName, eventData, done) {
+  if(eventName[0] === '@') {
+    //event: @data_file.json
+    readJSONFile(eventName.substring(1, eventName.length), function (event) {
+      sendEvent(instanceId, event, done);
+    });   
+  } else if(eventData) {
+    if(eventData[0] === '@') {
+      //event: name @data_file.json
+      readJSONFile(eventData.substring(1, eventData.length), function (eventData) {
+        sendEvent(instanceId, { name: eventName, data: eventData }, done);
+      });
+    } else {
+      //event: name arbitrary_data
+      try {
+        eventData = JSON.parse(eventData);
+        sendEvent(instanceId, { name: eventName, data: eventData }, done);
+      } catch(err) {
+        logError('Error parsing JSON data', err);
+      }
+    }
+  } else {
+    //event: name
+    sendEvent(instanceId, { name: eventName }, done);
+  }
+
+  function readJSONFile (path, done) {
+    fs.readFile(path, { encoding: 'utf-8' }, function (err, data) {
+      if (err) {
+        logError('Error reading file', err);
+      }
+
+      try {
+        data = JSON.parse(data);
+      } catch(err) {
+        logError('Error parsing JSON file', err);
+      }
+
+      done(data);
+    });
+  }
+
+  function sendEvent(instanceId, event, done) {
+    console.log('Sending event', event);
     swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
                                       InstanceId: instanceId.split('/')[1],
-                                      Event: { name: eventName, data: options.eventData } }, {}, function (data) {
-      logSuccess('Event sent, Current state:', data.headers.normalized['X-Configuration']);
+                                      Event: event }, {}, function (data) {
+      logSuccess('Sent event:', event);
+      if(done) done(null, data.headers.normalized['X-Configuration']);
     }, function (data) {
       logError('Error sending event', data.data.toString());
+      if(done) done(data.data.toString());
     });
-  });
+  }
+}
 
 // scxml interact <InstanceId>
 // node client.js interact test2/testinstance
@@ -214,71 +265,8 @@ program
     if(options.host) changeSwaggerHost(options.host);
 
     repl.start('scxml >', process.stdin, function (cmd, context, filename, callback) {
-      var event;
-
-      if(cmd[0] === '@') {
-        //event: @data_file.json
-        var eventFilename = cmd.split(/[\n\r]/g)[0].substring(1, cmd.length);
-
-        readJSONFile(eventFilename, function (eventData) {
-            event = eventData;
-            sendEvent();
-        });
-      } else {
-        event = parseREPL(cmd);
-
-        if(event.data) {
-          if(event.data[0] === '@') {
-            //event: name @data_file.json
-            var dataFilename = event.data.substring(1, event.data.length);
-
-            readJSONFile(dataFilename, function (eventData) {
-                event.data = eventData;
-                sendEvent();
-            });
-          } else {
-            //event: name arbitrary_data
-            try {
-              event.data = JSON.parse(event.data);
-              sendEvent();
-            } catch(err) {
-              logError('Error parsing JSON data', err);
-            }
-          }
-        } else {
-          //event: name
-          sendEvent();
-        }
-      }
-
-      function readJSONFile (path, done) {
-        fs.readFile(path, { encoding: 'utf-8' }, function (err, data) {
-          if (err) {
-            logError('Error reading file', err);
-          }
-
-          try {
-            data = JSON.parse(data);
-          } catch(err) {
-            logError('Error parsing JSON file', err);
-          }
-
-          done(data);
-        });
-      }
-
-      function sendEvent() {
-        console.log('Sending event', event);
-        swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
-                                          InstanceId: instanceId.split('/')[1],
-                                          Event: event }, {}, function (data) {
-          logSuccess('Sent event:', event);
-          callback(null, data.headers.normalized['X-Configuration']);
-        }, function (data) {
-          logError('Error sending event', data.data.toString());
-          process.exit(1);
-        });
-      }
+      var event = parseREPL(cmd);
+      parseAndSendEvent(instanceId, event.name, event.data, callback);
     });
   });
 
