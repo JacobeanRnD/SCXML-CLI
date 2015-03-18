@@ -24,8 +24,9 @@ app.on('ready', function() {
   mainWindow.loadUrl('file://' + __dirname + '/index.html');
   mainWindow.webContents.on('did-finish-load', function() {
     mainWindow.webContents.send('scxml-cli-server-ready', {
-      server: process.argv[2],
-      name: process.argv[3]
+      apiUrl: process.argv[2],
+      statechartName: process.argv[3],
+      instanceId: process.argv[4]
     });
   });
 

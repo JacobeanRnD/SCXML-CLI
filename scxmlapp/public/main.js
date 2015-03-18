@@ -2,15 +2,11 @@
 
 $(function() {
   /* global alert,EventSource */
-  var server,
-    statechartName;
+  var options;
 
-  require('ipc').on('scxml-cli-server-ready', function(options) {
-    console.log(options);
-
-    server = options.server;
-    statechartName = options.name;
-
+  require('ipc').on('scxml-cli-server-ready', function(opt) {
+    options = opt;
+    
     getScxml();
   });
 
@@ -22,7 +18,7 @@ $(function() {
   function getScxml() {
     $.ajax({
         type: 'GET',
-        url: server + '/' + statechartName,
+        url: options.apiUrl + '/' + options.statechartName,
         dataType: 'text'
       })
       .done(function(data, status, xhr) {
@@ -89,43 +85,43 @@ $(function() {
         layout.fit();
 
         if(!scxmlChangeSource) {
-          scxmlChangeSource = new EventSource(server + '/' + statechartName + '/_changes');
+          scxmlChangeSource = new EventSource(options.apiUrl + '/' + options.statechartName + '/_changes');
 
           scxmlChangeSource.addEventListener('onChange', function(e) {
             getScxml();
           }, false);
         }
 
-        // if(vizType === 'statechart') {
-        //   return;
-        // }
+        if(!options.instanceId) {
+          return;
+        }
 
-        // if (!eventChangeSource) {
-        //   eventChangeSource = new EventSource(server + './_changes');
+        if (!eventChangeSource) {
+          eventChangeSource = new EventSource(options.apiUrl + '/' + options.statechartName + '/' + options.instanceId + '/_changes');
 
-        //   eventChangeSource.addEventListener('onEntry', function(e) {
-        //     highlight('onEntry', e.data);
-        //   }, false);
+          eventChangeSource.addEventListener('onEntry', function(e) {
+            highlight('onEntry', e.data);
+          }, false);
 
-        //   eventChangeSource.addEventListener('onExit', function(e) {
-        //     highlight('onExit', e.data);
-        //   }, false);
-        // }
+          eventChangeSource.addEventListener('onExit', function(e) {
+            highlight('onExit', e.data);
+          }, false);
+        }
 
-        // $.ajax({
-        //     type: 'GET',
-        //     url: './',
-        //     dataType: 'json'
-        //   })
-        //   .done(function(configuration, status, xhr) {
-        //     if (status !== 'success') {
-        //       alert('Error retrieving instance configuration:', status);
-        //       console.log(xhr);
-        //       return;
-        //     }
+        $.ajax({
+            type: 'GET',
+            url: options.apiUrl + '/' + options.statechartName + '/' + options.instanceId,
+            dataType: 'json'
+          })
+          .done(function(configuration, status, xhr) {
+            if (status !== 'success') {
+              alert('Error retrieving instance configuration:', status);
+              console.log(xhr);
+              return;
+            }
 
-        //     configuration.forEach(highlight.bind(this, 'onEntry'));
-        //   });
+            configuration.forEach(highlight.bind(this, 'onEntry'));
+          });
       }).done();
     } catch (e) {
       alert('Error parsing scxml content:', e.message);
