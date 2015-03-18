@@ -12,6 +12,7 @@
     "atom-shell": "^0.21.3-1",
     "commander": "^2.7.1",
     "eventsource": "^0.1.6",
+    "express": "^4.12.3",
     "globwatcher": "^1.4.0",
     "open": "0.0.5",
     "swagger-client": "^2.1.10-M1",

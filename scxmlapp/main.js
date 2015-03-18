@@ -22,6 +22,12 @@ app.on('ready', function() {
 
   // and load the index.html of the app.
   mainWindow.loadUrl('file://' + __dirname + '/index.html');
+  mainWindow.webContents.on('did-finish-load', function() {
+    mainWindow.webContents.send('scxml-cli-server-ready', {
+      server: process.argv[2],
+      name: process.argv[3]
+    });
+  });
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function() {

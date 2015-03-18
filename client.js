@@ -383,14 +383,59 @@ program
     open(apiUrl + '/' + statechartnameOrInstanceId + '/_viz');
   });
 
+// node client.js atomtest ./test1.scxml
 program
-  .command('atomtest')
-  .action(function () {
+  .command('atomtest <path>')
+  .action(function (path) {
     var atom = require('atom-shell'),
       childProcess = require('child_process');
 
+    var app = require('express')(),
+      fileName = pathNode.basename(path);
+
+    app.get('/:StateChartName', function (req, res) {
+      fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
+        if (err) {
+          res.sendStatus(404);
+          return;
+        }
+
+        res.status(200).send(definition);
+      });
+    });
+
+    app.get('/:StateChartName/_changes', function (req, res) {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache'
+      });
+
+      res.write(':' + new Array(2049).join(' ') + '\n'); // 2kB padding for IE
+      res.write('retry: 2000\n');
+
+      res.write('event: subscribed\n');
+      res.write('data: \n\n');
+
+      var handle = setInterval(function() {
+        res.write('\n');
+      }, 30 * 1000);
+
+      //clean up
+      req.on('close', function() {
+        console.log('Request closed');
+        clearInterval(handle);
+      });
+
+      globwatcher(path).on('changed', function() {
+        res.write('event: onChange\n');
+        res.write('data: \n\n');
+      });
+    });
+
+    app.listen(8003);
+
     //Open scxmlapp
-    var child = childProcess.spawn(atom, ['./scxmlapp']);
+    var child = childProcess.spawn(atom, ['./scxmlapp', 'http://localhost:8003', fileName]);
   });
 
 // scxml log <InstanceId>
