@@ -383,6 +383,16 @@ program
     open(apiUrl + '/' + statechartnameOrInstanceId + '/_viz');
   });
 
+program
+  .command('atomtest')
+  .action(function () {
+    var atom = require('atom-shell'),
+      childProcess = require('child_process');
+
+    //Open scxmlapp
+    var child = childProcess.spawn(atom, ['./scxmlapp']);
+  });
+
 // scxml log <InstanceId>
 // node client.js log test2/testinstance
 program

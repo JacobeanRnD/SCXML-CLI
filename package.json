@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "atom-shell": "^0.21.3-1",
     "commander": "^2.7.1",
     "eventsource": "^0.1.6",
     "globwatcher": "^1.4.0",
