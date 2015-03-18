@@ -244,6 +244,7 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
                                       InstanceId: instanceId.split('/')[1],
                                       Event: event }, {}, function (data) {
       logSuccess('Sent event:', event);
+      logSuccess('Current:', data.headers.normalized['X-Configuration']);
       if(done) done(null, data.headers.normalized['X-Configuration']);
     }, function (data) {
       logError('Error sending event', data.data.toString());
