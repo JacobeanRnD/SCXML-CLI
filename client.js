@@ -100,13 +100,13 @@ program
     }
   });
 
-// scxml inspect <StatechartName>
+// scxml cat <StatechartName>
 //or
-// scxml inspect <InstanceId>
-// node client.js inspect test2
-// node client.js inspect test2/testinstance
+// scxml cat <InstanceId>
+// node client.js cat test2
+// node client.js cat test2/testinstance
 program
-  .command('inspect <StatechartNameOrInstanceId>')
+  .command('cat <StatechartNameOrInstanceId>')
   .description('Get details of a statechart or an instance')
   .option("-H, --host <host>", "Change server host")
   .action(function(statechartnameOrInstanceId, options) {
