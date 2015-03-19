@@ -7,8 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "bower install"
   },
+  "preferGlobal": true,
   "bin": {
-    "scxml": "./client.js"
+    "scxml": "client.js"
   },
   "author": "",
   "license": "ISC",

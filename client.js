@@ -400,7 +400,7 @@ program
         childProcess = require('child_process');
     
       var child = childProcess.spawn( atom,
-                                      ['./scxmlapp', apiUrl, statechartname, instanceId],
+                                      [__dirname + '/scxmlapp', apiUrl, statechartname, instanceId],
                                       { detached: true, stdio: ['ignore', 'ignore', 'ignore'] });
 
       //Detach the app from this process and get the cli back
