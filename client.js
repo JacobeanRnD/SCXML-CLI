@@ -68,7 +68,7 @@ program
     }
 
     saveContents();
-    
+
     function saveContents () {
       fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
         if (err) {
@@ -90,8 +90,8 @@ program
 
         swagger.apis.default.createOrUpdateStatechartDefinition({ parameterContentType: "application/xml",
                                                                   scxmlDefinition: definition,
-                                                                  StateChartName: name },
-                                                                { }, function (data) {
+                                                                  StateChartName: name
+                                                                }, function (data) {
                                                                   logSuccess('Statechart saved, StateChartName:', data.headers.normalized.Location);
                                                                 }, function (data) {
                                                                   logError('Error saving statechart', data.data.toString());
@@ -116,13 +116,13 @@ program
       instanceId = statechartnameOrInstanceId.split('/')[1];
 
     if(instanceId) {
-      swagger.apis.default.getInstance({ StateChartName: statechartname, InstanceId: instanceId }, {}, function (data) {
+      swagger.apis.default.getInstance({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
         logSuccess('Instance details:', data.data.toString());
       }, function (data) {
         logError('Error getting instance detail', data.data.toString());
       });
     } else {
-      swagger.apis.default.getStatechartDefinition({ StateChartName: statechartname }, {}, function (data) {
+      swagger.apis.default.getStatechartDefinition({ StateChartName: statechartname }, function (data) {
         logSuccess('Statechart details:', data.data.toString());
       }, function (data) {
         logError('Error getting statechart detail', data.data.toString());
@@ -141,13 +141,13 @@ program
     if(options.host) changeSwaggerHost(options.host);
 
     if(statechartname) {
-      swagger.apis.default.getInstances({ StateChartName: statechartname }, {}, function (data) {
+      swagger.apis.default.getInstances({ StateChartName: statechartname }, function (data) {
         logSuccess('Instance list:', data.data.toString());
       }, function (data) {
         logError('Error getting instance list', data.data.toString());
       });
     } else {
-      swagger.apis.default.getStatechartDefinitions({}, {}, function (data) {
+      swagger.apis.default.getStatechartDefinitions({}, function (data) {
         logSuccess('Statechart list:', data.data.toString());
       }, function (data) {
         logError('Error getting statechart list', data.data.toString());
@@ -175,9 +175,9 @@ program
     }
 
     if(options.instanceId) {
-      swagger.apis.default.createNamedInstance({ StateChartName: statechartname, InstanceId: options.instanceId }, { }, onInstanceSuccess, onInstanceError);
+      swagger.apis.default.createNamedInstance({ StateChartName: statechartname, InstanceId: options.instanceId }, onInstanceSuccess, onInstanceError);
     } else {
-      swagger.apis.default.createInstance({ StateChartName: statechartname }, { }, onInstanceSuccess, onInstanceError);
+      swagger.apis.default.createInstance({ StateChartName: statechartname }, onInstanceSuccess, onInstanceError);
     }
   });
 
@@ -242,12 +242,15 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
     console.log('Sending event', event);
     swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
                                       InstanceId: instanceId.split('/')[1],
-                                      Event: event }, {}, function (data) {
+                                      Event: event
+                                    }, function (data) {
       logSuccess('Sent event:', event);
       logSuccess('Current:', data.headers.normalized['X-Configuration']);
+      
       if(done) done(null, data.headers.normalized['X-Configuration']);
     }, function (data) {
       logError('Error sending event', data.data.toString());
+
       if(done) done(data.data.toString());
     });
   }
@@ -295,13 +298,13 @@ program
       instanceId = statechartnameOrInstanceId.split('/')[1];
 
     if(instanceId) {
-      swagger.apis.default.deleteInstance({ StateChartName: statechartname, InstanceId: instanceId }, {}, function (data) {
+      swagger.apis.default.deleteInstance({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
         logSuccess('Deleted instance');
       }, function (data) {
         logError('Error deleting instance', data.data.toString());
       });
     } else {
-      swagger.apis.default.deleteStatechartDefinition({ StateChartName: statechartname }, {}, function (data) {
+      swagger.apis.default.deleteStatechartDefinition({ StateChartName: statechartname }, function (data) {
         logSuccess('Deleted statechart and it\'s children');
       }, function (data) {
         logError('Error deleting statechart', data.data.toString());
@@ -412,7 +415,7 @@ program
     var statechartname = instanceId.split('/')[0],
       instanceId = instanceId.split('/')[1];
 
-    swagger.apis.default.getEventLog({ StateChartName: statechartname, InstanceId: instanceId }, {}, function (data) {
+    swagger.apis.default.getEventLog({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
       
       var eventLog = JSON.parse(data.data.toString());
 
