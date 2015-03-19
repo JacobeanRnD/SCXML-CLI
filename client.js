@@ -268,7 +268,12 @@ program
   .option("-H, --host <host>", "Change server host")
   .action(function(instanceId, options) {
     if(options.host) changeSwaggerHost(options.host);
-    
+      
+    if(instanceId.indexOf('/') === -1) {
+      logError('Specify an instance id');
+      return;
+    }
+
     repl.start({
       prompt: "scxml >",
       input: process.stdin,
