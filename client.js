@@ -92,6 +92,7 @@ program
   .description('Save or update a state machine definition.')
   .option("-n, --statechartname [name.scxml]", "Specify a name for the state machine definition")
   .option("-w, --watch", "Watch the scxml file for changes and save automatically.")
+  .option("-h, --handler <path>", "Send along http handler javascript file")
   .option("-H, --host <host>", "Change server host")
   .action(function(path, options) {
     if(options.host) changeSwaggerHost(options.host);
@@ -99,7 +100,13 @@ program
     if(options.watch) {      //Watch scxml file
       globwatcher(path).on('changed', function() {
         saveContents();
-      }); 
+      });
+
+      if(options.handler) {      //Watch handler file
+        globwatcher(options.handler).on('changed', function() {
+          saveContents();
+        });
+      }
     }
 
     saveContents();
@@ -111,27 +118,36 @@ program
           process.exit(1);
         }
 
-        if (err) {
-          logError('Error reading file', err);
-          process.exit(1);
-        }
-
         var fileName = pathNode.basename(path);
-
         var name = options.statechartname || fileName;
+        name = name.indexOf('.scxml') === -1 ? (name + '.scxml') : name;//Add .scxml suffix to all statecharts
 
-        //Add .scxml suffix to all statecharts
-        name = name.indexOf('.scxml') === -1 ? (name + '.scxml') : name;
+        
 
-        swagger.apis.default.createOrUpdateStatechartDefinition({ parameterContentType: "application/xml",
-                                                                  scxmlDefinition: definition,
-                                                                  StateChartName: name
-                                                                }, function (data) {
-                                                                  logSuccess('Statechart saved, StateChartName:', data.headers.normalized.Location);
-                                                                }, function (data) {
-                                                                  logError('Error saving statechart', data.data.toString());
-                                                                });
+        if(options.handler) {
+          fs.readFile(options.handler, { encoding: 'utf-8' }, function (err, handler) {
+            if (err) {
+              logError('Error reading file', err);
+              process.exit(1);
+            }
+
+            var requestOptions = { parameterContentType: "application/json", scxmlWithHandlers: { scxml: definition, handlers: handler }, StateChartName: name };
+            swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
+          });
+        } else {
+          var requestOptions = { parameterContentType: "application/xml", scxmlDefinition: definition, StateChartName: name };
+
+          swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
+        }
       });
+
+      function onStatechartSuccess (data) {
+        logSuccess('Statechart saved, StateChartName:', data.headers.normalized.Location);
+      }
+
+      function onStatechartError (data) {
+        logError('Error saving statechart', data.data.toString());
+      }
     }
   });
 
