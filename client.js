@@ -122,8 +122,6 @@ program
         var name = options.statechartname || fileName;
         name = name.indexOf('.scxml') === -1 ? (name + '.scxml') : name;//Add .scxml suffix to all statecharts
 
-        
-
         if(options.handler) {
           fs.readFile(options.handler, { encoding: 'utf-8' }, function (err, handler) {
             if (err) {
