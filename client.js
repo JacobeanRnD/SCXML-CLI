@@ -49,6 +49,41 @@ function onSwaggerSuccess () {
   }
 }
 
+
+// scxml create <foo.scxml>
+// node client.js create test1.scxml
+program
+  .command('create <path>')
+  .description('Create an scxml file on given path')
+  .action(function(path, options) {
+    var fileName = pathNode.basename(path);
+    fileName = fileName || 'helloworld.scxml';
+    fileName = fileName.indexOf('.scxml') === -1 ? (fileName + '.scxml') : fileName;
+
+    var fileContent = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+                      '<scxml xmlns="http://www.w3.org/2005/07/scxml" name="helloworld" datamodel="ecmascript" version="1.0">\n' +
+                      '  <state id="a">\n' +
+                      '    <transition target="b" event="t"/>\n' +
+                      '  </state>\n' +
+                      '  <state id="b">\n' +
+                      '    <transition target="c" event="t"/>\n' +
+                      '  </state>\n' +
+                      '  <state id="c">\n' +
+                      '    <transition target="a" event="t"/>\n' +
+                      '  </state>\n' +
+                      '</scxml>';
+
+    fs.writeFile(fileName, fileContent, 'utf-8', function (err) {
+      if (err) {
+        logError('Error reading file', err);
+        process.exit(1);
+      }
+
+      logSuccess('Statechart file created locally, StateChartName:', fileName);
+    });
+
+  });
+
 // scxml save <foo.scxml> -n <StateChartName>
 // node client.js save ./test1.scxml
 // node client.js save -n test2 ./test1.scxml
