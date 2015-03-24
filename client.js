@@ -129,6 +129,8 @@ program
               process.exit(1);
             }
 
+            //Remove newlines, this helps writing javascript in json files.
+            handler = handler.replace(/\n/g, '');
             var requestOptions = { parameterContentType: "application/json", scxmlWithHandlers: { scxml: definition, handlers: handler }, StateChartName: name };
             swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
           });
