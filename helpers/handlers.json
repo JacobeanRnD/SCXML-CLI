@@ -1,0 +1,4 @@
+{
+    "twilio" : "function() { var id = scxml.createInstance(); scxml.send(id, {name: 't'}); var conf = scxml.getInstance(id); res.send('twilio, ' + JSON.stringify(conf)); }",
+    "twitter": "function() { res.send('twitter' + req.path + scxml); }"
+}
