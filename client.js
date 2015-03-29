@@ -448,10 +448,13 @@ program
       open(apiUrl + '/' + statechartnameOrInstanceId + '/_viz');
     } else {
       var atom = require('atom-shell'),
-        childProcess = require('child_process');
+        childProcess = require('child_process'),
+        options = [__dirname + '/scxmlapp', apiUrl, statechartname];
+
+      if(instanceId) options.push(instanceId);
     
       var child = childProcess.spawn( atom,
-                                      [__dirname + '/scxmlapp', apiUrl, statechartname, instanceId],
+                                      options,
                                       { detached: true, stdio: ['ignore', 'ignore', 'ignore'] });
 
       //Detach the app from this process and get the cli back
