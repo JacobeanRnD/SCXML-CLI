@@ -35,8 +35,22 @@ switch(process.version.substring(0, 5)) {
     process.exit(1);
 }
 
+function getHostFromArgv(){
+  var hostArgIndex =  process.argv.indexOf('-H');
+  if(hostArgIndex === -1){
+    hostArgIndex = process.argv.indexOf('--host')
+  }
+  if(hostArgIndex > -1){
+    var hostOption = process.argv[hostArgIndex + 1];
+    process.argv.splice(hostArgIndex, 2);
+    return hostOption;
+  }else{
+    return 'http://localhost:8002';
+  }
+}
+
 var swagger = new swaggerClient.SwaggerClient({
-  url: 'http://localhost:8002/smaas.json',
+  url: getHostFromArgv() + '/smaas.json',
   success: onSwaggerSuccess
 });
 
@@ -93,9 +107,7 @@ program
   .option("-n, --statechartname [name.scxml]", "Specify a name for the state machine definition")
   .option("-w, --watch", "Watch the scxml file for changes and save automatically.")
   .option("-h, --handler <path>", "Send along http handler javascript file")
-  .option("-H, --host <host>", "Change server host")
   .action(function(path, options) {
-    if(options.host) changeSwaggerHost(options.host);
 
     if(options.watch) {      //Watch scxml file
       globwatcher(path).on('changed', function() {
@@ -159,9 +171,7 @@ program
 program
   .command('cat <StatechartNameOrInstanceId>')
   .description('Get details of a statechart or an instance')
-  .option("-H, --host <host>", "Change server host")
   .action(function(statechartnameOrInstanceId, options) {
-    if(options.host) changeSwaggerHost(options.host);
 
     var statechartname = statechartnameOrInstanceId.split('/')[0],
       instanceId = statechartnameOrInstanceId.split('/')[1];
@@ -187,9 +197,7 @@ program
 program
   .command('ls [StateChartName]')
   .description('Get list of all statechart definitions or instances')
-  .option("-H, --host <host>", "Change server host")
   .action(function(statechartname, options) {
-    if(options.host) changeSwaggerHost(options.host);
 
     if(statechartname) {
       swagger.apis.default.getInstances({ StateChartName: statechartname }, function (data) {
@@ -213,9 +221,7 @@ program
   .command('run <StateChartName>')
   .description('Create an instance with the statechart definition.')
   .option("-n, --instanceId [instanceId]", "Specify an id for the instance")
-  .option("-H, --host <host>", "Change server host")
   .action(function(statechartname, options) {
-    if(options.host) changeSwaggerHost(options.host);
 
     function onInstanceSuccess (data) {
       logSuccess('Instance created, InstanceId:', data.headers.normalized.Location);
@@ -240,9 +246,7 @@ program
 program
   .command('send <InstanceId> <eventName> [eventData]')
   .description('Send an event to a statechart instance.')
-  .option("-H, --host <host>", "Change server host")
   .action(function(instanceId, eventName, eventData, options) {
-    if(options.host) changeSwaggerHost(options.host);
 
     parseAndSendEvent(instanceId, eventName, eventData);
   });
@@ -316,9 +320,7 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
 program
   .command('interact <InstanceId>')
   .description('Start REPL interface to send events to a statechart instance.')
-  .option("-H, --host <host>", "Change server host")
   .action(function(instanceId, options) {
-    if(options.host) changeSwaggerHost(options.host);
       
     if(instanceId.indexOf('/') === -1) {
       logError('Specify an instance id');
@@ -346,9 +348,7 @@ program
 program
   .command('rm <StatechartNameOrInstanceId>')
   .description('Remove a statechart or an instance.')
-  .option("-H, --host <host>", "Change server host")
   .action(function(statechartnameOrInstanceId, options) {
-    if(options.host) changeSwaggerHost(options.host);
 
     var statechartname = statechartnameOrInstanceId.split('/')[0],
       instanceId = statechartnameOrInstanceId.split('/')[1];
@@ -376,9 +376,7 @@ program
 program
   .command('subscribe <StatechartNameOrInstanceId>')
   .description('Listen to changes on a statechart or an instance.')
-  .option("-H, --host <host>", "Change server host")
   .action(function(statechartnameOrInstanceId, options) {
-    if(options.host) changeSwaggerHost(options.host);
 
     var statechartname = statechartnameOrInstanceId.split('/')[0],
       instanceId = statechartnameOrInstanceId.split('/')[1];
@@ -435,10 +433,8 @@ program
 program
   .command('viz <StatechartNameOrInstanceId>')
   .description('Open visualization of the statechart or realtime visualization of the instance.')
-  .option("-H, --host <host>", "Change server host")
   .option("-b, --browser", "Open the default browser instead of the app")
   .action(function(statechartnameOrInstanceId, options) {
-    if(options.host) changeSwaggerHost(options.host);
 
     var statechartname = statechartnameOrInstanceId.split('/')[0],
       instanceId = statechartnameOrInstanceId.split('/')[1],
@@ -464,9 +460,7 @@ program
 program
   .command('log <InstanceId>')
   .description('Get all events of the instance.')
-  .option("-H, --host <host>", "Change server host")
   .action(function(instanceId, options) {
-    if(options.host) changeSwaggerHost(options.host);
 
     var statechartname = instanceId.split('/')[0],
       instanceId = instanceId.split('/')[1];
@@ -498,13 +492,6 @@ program
     logError('Unrecognized command');
     program.outputHelp();
   });
-
-function changeSwaggerHost (host, apiName) {
-  swagger.host = host;
-  swagger.apisArray[0].operationsArray.forEach(function (api, i) {
-    swagger.apisArray[0].operationsArray[i].host = host;
-  });
-}
 
 function logSuccess (message, obj) {
   if(message) console.log('\u001b[32m' + message + '\u001b[0m');
