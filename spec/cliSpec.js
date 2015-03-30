@@ -1,4 +1,6 @@
 'use strict';
+// jshint node: true
+/* global describe, beforeEach, afterEach, it */
 
 var nixt = require('nixt');
 
@@ -7,7 +9,6 @@ var tempPath = 'spec/.tmp/';
 describe('SCXML-CLI', function () {
   beforeEach(function(done){
     nixt()
-      // .exec('scxmld')
       .run('rm -rf ' + tempPath)
       .run('mkdir ' + tempPath)
       .exist(tempPath)
