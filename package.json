@@ -18,8 +18,12 @@
     "commander": "^2.7.1",
     "eventsource": "^0.1.6",
     "globwatcher": "^1.4.0",
-    "nixt": "^0.4.1",
     "open": "0.0.5",
     "swagger-client": "^2.1.10-M1"
+  },
+  "devDependencies": {
+    "express": "^4.12.3",
+    "js-yaml": "^3.2.7",
+    "nixt": "^0.4.1"
   }
 }
