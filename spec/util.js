@@ -19,6 +19,13 @@ module.exports = function(opts) {
   opts.beforeEach = function (done) {
 
     var app = require('express')();
+    app.use(function(req, res, next) {
+      req.body = '';
+      req.on('data', function(data) {
+        return req.body += data;
+      });
+      return req.on('end', next);
+    });
 
     //Serve swagger client API
     app.get('/smaas.json', function (req, res) {
