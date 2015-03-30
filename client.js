@@ -74,6 +74,8 @@ program
     fileName = fileName || 'helloworld.scxml';
     fileName = fileName.indexOf('.scxml') === -1 ? (fileName + '.scxml') : fileName;
 
+    var finalPath = pathNode.dirname(path) + '/' + fileName;
+
     var fileContent = '<?xml version="1.0" encoding="UTF-8"?>\n' +
                       '<scxml xmlns="http://www.w3.org/2005/07/scxml" name="helloworld" datamodel="ecmascript" version="1.0">\n' +
                       '  <state id="a">\n' +
@@ -87,7 +89,7 @@ program
                       '  </state>\n' +
                       '</scxml>';
 
-    fs.writeFile(fileName, fileContent, 'utf-8', function (err) {
+    fs.writeFile(finalPath, fileContent, 'utf-8', function (err) {
       if (err) {
         logError('Error reading file', err);
         process.exit(1);
@@ -95,7 +97,6 @@ program
 
       logSuccess('Statechart file created locally, StateChartName:', fileName);
     });
-
   });
 
 // scxml save <foo.scxml> -n <StateChartName>
