@@ -19,13 +19,11 @@
     "tests"
   ],
   "dependencies": {
-<<<<<<< HEAD
     "desm-force-layout": "git+https://18c2f5d073b47be8b1f92424eb2e4030ea467ea4:x-oauth-basic@github.com/JacobeanRnD/deus-ex-state-machine-visualization.git",
-    "jquery": "~2.1.3"
-=======
-    "desm-force-layout": "https://github.com/JacobeanRnD/deus-ex-state-machine-visualization.git",
     "jquery": "~2.1.3",
     "underscore": "~1.8.2"
->>>>>>> 93e5001ec7d70b9b386f9a3e0db6baded99fdcd2
+  },
+  "resolutions": {
+    "klayjs": "~0.3.2"
   }
 }
