@@ -503,8 +503,8 @@ function logSuccess (message, obj) {
 
 function logError (message, obj) {
   //Beep sound
-  console.log('\u0007');
+  process.stderr.write('\u0007\n');
 
-  if(message) console.log('\u001b[31mERROR\u001b[0m: ' + message);
-  if(obj) console.log(obj);
+  if(message) process.stderr.write('\u001b[31mERROR\u001b[0m: ' + message + '\n');
+  if(obj) process.stderr.write(obj + '\n');
 }
