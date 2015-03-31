@@ -40,8 +40,9 @@ describe('SCXML-CLI', function () {
   });
 
   it('should save helloworld.scxml as helloearth.scxml', function (done) {
+    var name = 'helloearth';
     util.passToTestRunner = function (req, res) {
-      expect(req.path).toBe(util.baseApi + 'helloearth.scxml');
+      expect(req.path).toBe(util.baseApi + name + '.scxml');
       expect(req.method).toBe('PUT');
       expect(req.headers['content-type']).toBe('application/xml');
       expect(fs.readFileSync(util.tempPath + '/helloworld.scxml', 'utf-8')).toBe(req.body);
@@ -52,7 +53,7 @@ describe('SCXML-CLI', function () {
     util.createHelloWorld(function () {
       //Save created file
       nixt()
-        .run(util.client + 'save ' + util.tempPath + '/helloworld.scxml -n helloearth')
+        .run(util.client + 'save ' + util.tempPath + '/helloworld.scxml -n ' + name)
         .expect(util.checkStderr)
         .end(done);
     });
@@ -115,6 +116,25 @@ describe('SCXML-CLI', function () {
       .end(done);
   });
 
+  it('should get the contents of a statechart', function (done) {
+    util.passToTestRunner = function (req, res) {
+      expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
+      expect(req.method).toBe('GET');
+
+      res.send(fs.readFileSync(util.tempPath + '/helloworld.scxml', 'utf-8'));
+    };
+
+    util.createHelloWorld(function () {
+      nixt({ colors: false })
+        .run(util.client + 'save ' + util.tempPath + '/helloworld.scxml')
+        .expect(util.checkStderr)
+        .run(util.client + 'cat helloworld.scxml')
+        .expect(util.checkStderr)
+        .stdout('Statechart details:\n' + fs.readFileSync(util.tempPath + '/helloworld.scxml', 'utf-8'))
+        .end(done);
+    });
+  });
+
   // TODO: Write tests for --watch option, nixt can't run unending commands
 
   it('should get the list of statecharts', function (done) {
@@ -146,6 +166,61 @@ describe('SCXML-CLI', function () {
       .run(util.client + 'ls helloworld.scxml')
       .expect(util.checkStderr)
       .stdout('Instance list:' + JSON.stringify(instances))
+      .end(done);
+  });
+
+  it('should run an instance', function (done) {
+    var instanceName = 'helloinstance';
+
+    util.passToTestRunner = function (req, res) {
+      expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
+      expect(req.method).toBe('POST');
+
+      res.setHeader('Location', 'helloworld.scxml/' + instanceName);
+
+      res.sendStatus(201);
+    };
+
+    nixt({ colors: false, newlines: false })
+      .run(util.client + 'run helloworld.scxml')
+      .expect(util.checkStderr)
+      .stdout('Instance created, InstanceId:helloworld.scxml/' + instanceName)
+      .end(done);
+  });
+
+  it('should run an instance with name', function (done) {
+    var instanceName = 'helloinstance';
+
+    util.passToTestRunner = function (req, res) {
+      expect(req.path).toBe(util.baseApi + 'helloworld.scxml/' + instanceName);
+      expect(req.method).toBe('PUT');
+
+      res.setHeader('Location', 'helloworld.scxml/' + instanceName);
+
+      res.sendStatus(201);
+    };
+
+    nixt({ colors: false, newlines: false })
+      .run(util.client + 'run helloworld.scxml -n ' + instanceName)
+      .expect(util.checkStderr)
+      .stdout('Instance created, InstanceId:helloworld.scxml/' + instanceName)
+      .end(done);
+  });
+
+  it('should get the instance configuration', function (done) {
+    var conf = [['a'], {}, false, {}];
+
+    util.passToTestRunner = function (req, res) {
+      expect(req.path).toBe(util.baseApi + 'helloworld.scxml/helloinstance');
+      expect(req.method).toBe('GET');
+
+      res.send(conf);
+    };
+
+    nixt({ colors: false, newlines: false })
+      .run(util.client + 'cat helloworld.scxml/helloinstance')
+      .expect(util.checkStderr)
+      .stdout('Instance details:' + JSON.stringify(conf))
       .end(done);
   });
 });
