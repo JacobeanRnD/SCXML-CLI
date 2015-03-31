@@ -295,12 +295,10 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
   }
 
   function sendEvent(instanceId, event, done) {
-    console.log('Sending event', event);
     swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
                                       InstanceId: instanceId.split('/')[1],
                                       Event: event
                                     }, function (data) {
-      logSuccess('Sent event:', event);
       logSuccess('Current:', data.headers.normalized['X-Configuration']);
       
       if(done) done(null, data.headers.normalized['X-Configuration']);
