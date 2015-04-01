@@ -17,6 +17,7 @@ module.exports = function(opts) {
   opts.mainProgram = path.resolve(__dirname + '/../client.js');
   opts.host = 'http://localhost:' + opts.port;
   opts.client = 'node ' + opts.mainProgram + ' -H ' + opts.host + ' ';
+  opts.colorRemoval = /\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]/g;
   
   opts.beforeEach = function (done) {
 

@@ -5,8 +5,6 @@
 var spawn = require('child_process').spawn,
   util = require('./util')();
 
-var colorRemoval = /\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]/g;
-
 describe('SCXML-CLI - subscribe', function () {
   beforeEach(function(done) {
     util.beforeEach(done);
@@ -17,7 +15,6 @@ describe('SCXML-CLI - subscribe', function () {
   });
 
   function subsribeTest (path, actions, result, done) {
-    var subscribed = spawn('node', [util.mainProgram, '-H', util.host, 'subscribe', path]);
     var stdout = '', stderr = '';
 
     util.passToTestRunner = function (req, res) {
@@ -51,15 +48,18 @@ describe('SCXML-CLI - subscribe', function () {
       });
 
       setTimeout(function () {
-        expect(stdout.replace(colorRemoval, '')).toEqual(result.join('\n') + '\n');
+        expect(stdout.replace(util.colorRemoval, '')).toEqual(result.join('\n') + '\n');
         expect(stderr.length).toBe(0);
         done();
         // Check after all actions are done
       }, actions.length++ * 500);
     };
 
+    var subscribed = spawn('node', [util.mainProgram, '-H', util.host, 'subscribe', path]);
+
     subscribed.stdout.on('data', function (data) { stdout += data; });
     subscribed.stderr.on('data', function (data) { stderr += data; });
+
   }
 
   it('should get statechart changes', function (done) {

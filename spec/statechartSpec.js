@@ -3,6 +3,7 @@
 /* global describe, beforeEach, afterEach, it, expect */
 
 var nixt = require('nixt'),
+  spawn = require('child_process').spawn,
   util = require('./util')();
 
 describe('SCXML-CLI - statecharts', function () {
@@ -59,6 +60,8 @@ describe('SCXML-CLI - statecharts', function () {
   });
 
   it('should save helloworld.scxml and handler.json', function (done) {
+    var handler = { testhandler: 'testhandlerbody' };
+
     util.passToTestRunner = function (req, res) {
       req.body = JSON.parse(req.body);
       req.body.handlers = JSON.parse(req.body.handlers);
@@ -67,13 +70,12 @@ describe('SCXML-CLI - statecharts', function () {
       expect(req.method).toBe('PUT');
       expect(req.headers['content-type']).toBe('application/json');
       expect(util.read(util.tempPath + '/helloworld.scxml')).toBe(req.body.scxml);
-      expect(req.body.handlers.testhandler).toBe('testhandlerbody');
+      expect(req.body.handlers).toEqual(handler);
 
       res.sendStatus(201);
     };
 
     util.createHelloWorld(function () {
-      var handler = { testhandler: 'testhandlerbody' };
       var result = util.write(util.tempPath + '/helloworld.json', JSON.stringify(handler));
 
       expect(handler.length).toBe(result);
@@ -84,6 +86,36 @@ describe('SCXML-CLI - statecharts', function () {
         .expect(util.checkStderr)
         .end(done);
     });
+  });
+
+  it('should save helloworld.scxml -w, save on every change', function (done) {
+    var stdout = '', stderr = '';
+
+    util.passToTestRunner = function (req, res) {
+      expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
+      expect(req.method).toBe('PUT');
+      expect(req.headers['content-type']).toBe('application/xml');
+      expect(util.read(util.tempPath + '/helloworld.scxml')).toBe(req.body);
+
+      if(req.body === 'testdone') {
+        expect(stdout.length).toBeGreaterThan(0);
+        expect(stderr.length).toBe(0);
+        done();
+      }
+
+      res.sendStatus(201);
+    };
+
+    util.createHelloWorld(function () { 
+      var subscribed = spawn('node', [util.mainProgram, '-H', util.host, 'save', util.tempPath + '/helloworld.scxml', '-w']);
+
+      subscribed.stdout.on('data', function (data) { stdout += data; });
+      subscribed.stderr.on('data', function (data) { stderr += data; });
+    });
+
+    setTimeout(function () {
+      util.write(util.tempPath + '/helloworld.scxml', 'testdone');
+    }, 1000);
   });
 
   it('should fail to save missing file', function (done) {
