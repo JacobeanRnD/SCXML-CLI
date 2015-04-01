@@ -98,4 +98,21 @@ describe('SCXML-CLI - instances', function () {
       .expect(util.checkStderr)
       .end(done);
   });
+
+  it('should log events of an instance', function (done) {
+    var eventList = ['event1', 'event2', 'event3'];
+
+    util.passToTestRunner = function (req, res) {
+      expect(req.path).toBe(util.baseApi + 'helloworld.scxml/helloinstance/_eventLog');
+      expect(req.method).toBe('GET');
+
+      res.send(eventList);
+    };
+
+    nixt({ colors: false, newlines: false })
+      .run(util.client + 'log helloworld.scxml/helloinstance')
+      .expect(util.checkStderr)
+      .stdout('Event log:"' + eventList.join('""') + '"')
+      .end(done);
+  });
 });
