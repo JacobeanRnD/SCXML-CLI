@@ -151,4 +151,18 @@ describe('SCXML-CLI - statecharts', function () {
       .stdout('Statechart list:' + JSON.stringify(statecharts))
       .end(done);
   });
+
+  it('should remove a statechart', function (done) {
+    util.passToTestRunner = function (req, res) {
+      expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
+      expect(req.method).toBe('DELETE');
+
+      res.sendStatus(200);
+    };
+
+    nixt()
+      .run(util.client + 'rm helloworld.scxml')
+      .expect(util.checkStderr)
+      .end(done);
+  });
 });

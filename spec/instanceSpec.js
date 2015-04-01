@@ -84,4 +84,18 @@ describe('SCXML-CLI - instances', function () {
       .stdout('Instance details:' + JSON.stringify(conf))
       .end(done);
   });
+
+  it('should remove an instance', function (done) {
+    util.passToTestRunner = function (req, res) {
+      expect(req.path).toBe(util.baseApi + 'helloworld.scxml/helloinstance');
+      expect(req.method).toBe('DELETE');
+
+      res.sendStatus(200);
+    };
+
+    nixt()
+      .run(util.client + 'rm helloworld.scxml/helloinstance')
+      .expect(util.checkStderr)
+      .end(done);
+  });
 });
