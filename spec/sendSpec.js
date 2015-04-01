@@ -3,7 +3,6 @@
 /* global describe, beforeEach, afterEach, it, expect */
 
 var nixt = require('nixt'),
-  fs = require('fs'),
   util = require('./util')();
 
 var instanceId = 'helloworld.scxml/helloinstance',
@@ -73,7 +72,7 @@ describe('SCXML-CLI - send', function () {
       res.sendStatus(200);
     };
 
-    fs.writeFileSync(filePath, JSON.stringify(event.data), 'utf-8');
+    util.write(filePath, JSON.stringify(event.data));
 
     nixt({ colors: false, newlines: false })
       .run(util.client + 'send ' + instanceId + ' ' + event.name + ' @' + filePath)
@@ -96,7 +95,7 @@ describe('SCXML-CLI - send', function () {
       res.sendStatus(200);
     };
 
-    fs.writeFileSync(filePath, JSON.stringify(event), 'utf-8');
+    util.write(filePath, JSON.stringify(event));
 
     nixt({ colors: false, newlines: false })
       .run(util.client + 'send ' + instanceId + ' @' + filePath)

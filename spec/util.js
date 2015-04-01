@@ -81,5 +81,13 @@ module.exports = function(opts) {
       .end(done);
   };
 
+  opts.read = function (path) {
+    return fs.readFileSync(path, 'utf-8');
+  };
+
+  opts.write = function (path, data) {
+    return fs.writeFileSync(path, data, 'utf-8');
+  };
+
   return opts;
 };

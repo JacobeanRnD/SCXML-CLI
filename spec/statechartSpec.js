@@ -3,7 +3,6 @@
 /* global describe, beforeEach, afterEach, it, expect */
 
 var nixt = require('nixt'),
-  fs = require('fs'),
   util = require('./util')();
 
 describe('SCXML-CLI - statecharts', function () {
@@ -25,7 +24,7 @@ describe('SCXML-CLI - statecharts', function () {
       expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
       expect(req.method).toBe('PUT');
       expect(req.headers['content-type']).toBe('application/xml');
-      expect(fs.readFileSync(util.tempPath + '/helloworld.scxml', 'utf-8')).toBe(req.body);
+      expect(util.read(util.tempPath + '/helloworld.scxml')).toBe(req.body);
 
       res.sendStatus(201);
     };
@@ -45,7 +44,7 @@ describe('SCXML-CLI - statecharts', function () {
       expect(req.path).toBe(util.baseApi + name + '.scxml');
       expect(req.method).toBe('PUT');
       expect(req.headers['content-type']).toBe('application/xml');
-      expect(fs.readFileSync(util.tempPath + '/helloworld.scxml', 'utf-8')).toBe(req.body);
+      expect(util.read(util.tempPath + '/helloworld.scxml')).toBe(req.body);
 
       res.sendStatus(201);
     };
@@ -67,7 +66,7 @@ describe('SCXML-CLI - statecharts', function () {
       expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
       expect(req.method).toBe('PUT');
       expect(req.headers['content-type']).toBe('application/json');
-      expect(fs.readFileSync(util.tempPath + '/helloworld.scxml', 'utf-8')).toBe(req.body.scxml);
+      expect(util.read(util.tempPath + '/helloworld.scxml')).toBe(req.body.scxml);
       expect(req.body.handlers.testhandler).toBe('testhandlerbody');
 
       res.sendStatus(201);
@@ -75,7 +74,7 @@ describe('SCXML-CLI - statecharts', function () {
 
     util.createHelloWorld(function () {
       var handler = { testhandler: 'testhandlerbody' };
-      var result = fs.writeFileSync(util.tempPath + '/helloworld.json', JSON.stringify(handler), 'utf-8');
+      var result = util.write(util.tempPath + '/helloworld.json', JSON.stringify(handler));
 
       expect(handler.length).toBe(result);
 
@@ -121,7 +120,7 @@ describe('SCXML-CLI - statecharts', function () {
       expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
       expect(req.method).toBe('GET');
 
-      res.send(fs.readFileSync(util.tempPath + '/helloworld.scxml', 'utf-8'));
+      res.send(util.read(util.tempPath + '/helloworld.scxml'));
     };
 
     util.createHelloWorld(function () {
@@ -130,7 +129,7 @@ describe('SCXML-CLI - statecharts', function () {
         .expect(util.checkStderr)
         .run(util.client + 'cat helloworld.scxml')
         .expect(util.checkStderr)
-        .stdout('Statechart details:\n' + fs.readFileSync(util.tempPath + '/helloworld.scxml', 'utf-8'))
+        .stdout('Statechart details:\n' + util.read(util.tempPath + '/helloworld.scxml'))
         .end(done);
     });
   });
