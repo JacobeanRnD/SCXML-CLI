@@ -17,9 +17,7 @@ describe('SCXML-CLI - send', function () {
     util.afterEach(done);
   });
 
-  it('should send the event { name: helloname }', function (done) {
-    var event = { name: 'helloname' };
-
+  function sendSuccess (event, commandArg, done) {
     util.passToTestRunner = function (req, res) {
       expect(req.path).toBe(util.baseApi + instanceId);
       expect(req.method).toBe('POST');
@@ -31,76 +29,61 @@ describe('SCXML-CLI - send', function () {
     };
 
     nixt({ colors: false, newlines: false })
-      .run(util.client + 'send ' + instanceId + ' ' + event.name)
+      .run(util.client + 'send ' + instanceId + ' ' + commandArg)
       .expect(util.checkStderr)
       .stdout('Current:' + JSON.stringify(resultConf))
       .end(done);
+  }
+
+  function sendFail (commandArg, done) {
+    nixt({ colors: false, newlines: false })
+      .run(util.client + 'send ' + instanceId + ' ' + commandArg)
+      .expect(function (result) {
+        expect(result.stderr.length).toBeGreaterThan(0);
+      })
+      .end(done);
+  }
+
+  it('should send the event { name: helloname }', function (done) {
+    var event = { name: 'helloname' },
+      commandArg = event.name;
+
+    sendSuccess(event, commandArg, done);
   });
 
   // TODO: test for data: string
   it('should send the event { name: helloname, data: { test: "hellodata" } }', function (done) {
-    var event = { name: 'helloname', data: { test: 'hellodata' } };
+    var event = { name: 'helloname', data: { test: 'hellodata' } },
+      commandArg = event.name + ' \'' + JSON.stringify(event.data) + '\'';
 
-    util.passToTestRunner = function (req, res) {
-      expect(req.path).toBe(util.baseApi + instanceId);
-      expect(req.method).toBe('POST');
-      expect(JSON.parse(req.body)).toEqual(event);
-
-      res.setHeader('X-Configuration', JSON.stringify(resultConf));
-      
-      res.sendStatus(200);
-    };
-
-    nixt({ colors: false, newlines: false })
-      .run(util.client + 'send ' + instanceId + ' ' + event.name + ' \'' + JSON.stringify(event.data) + '\'')
-      .expect(util.checkStderr)
-      .stdout('Current:' + JSON.stringify(resultConf))
-      .end(done);
+    sendSuccess(event, commandArg, done);
   });
 
   it('should send the event name: helloname, data: @eventData.json', function (done) {
     var event = { name: 'helloname', data: { test: 'hellodata' } },
-      filePath = util.tempPath + '/eventData.json';
-
-    util.passToTestRunner = function (req, res) {
-      expect(req.path).toBe(util.baseApi + instanceId);
-      expect(req.method).toBe('POST');
-      expect(JSON.parse(req.body)).toEqual(event);
-
-      res.setHeader('X-Configuration', JSON.stringify(resultConf));
-      
-      res.sendStatus(200);
-    };
+      filePath = util.tempPath + '/eventData.json',
+      commandArg = event.name + ' @' + filePath;
 
     util.write(filePath, JSON.stringify(event.data));
 
-    nixt({ colors: false, newlines: false })
-      .run(util.client + 'send ' + instanceId + ' ' + event.name + ' @' + filePath)
-      .expect(util.checkStderr)
-      .stdout('Current:' + JSON.stringify(resultConf))
-      .end(done);
+    sendSuccess(event, commandArg, done);
   });
 
   it('should send the event @event.json', function (done) {
     var event = { name: 'helloname', data: { test: 'hellodata' } },
-      filePath = util.tempPath + '/event.json';
-
-    util.passToTestRunner = function (req, res) {
-      expect(req.path).toBe(util.baseApi + instanceId);
-      expect(req.method).toBe('POST');
-      expect(JSON.parse(req.body)).toEqual(event);
-
-      res.setHeader('X-Configuration', JSON.stringify(resultConf));
-      
-      res.sendStatus(200);
-    };
+      filePath = util.tempPath + '/event.json',
+      commandArg = '@' + filePath;
 
     util.write(filePath, JSON.stringify(event));
 
-    nixt({ colors: false, newlines: false })
-      .run(util.client + 'send ' + instanceId + ' @' + filePath)
-      .expect(util.checkStderr)
-      .stdout('Current:' + JSON.stringify(resultConf))
-      .end(done);
+    sendSuccess(event, commandArg, done);
+  });
+
+  it('should fail to send the event with missing @eventData.json', function (done) {
+    sendFail('helloname @eventData.json', done);
+  });
+
+  it('should fail to send the event with missing @event.json', function (done) {
+    sendFail('@event.json', done);
   });
 });
