@@ -6,7 +6,30 @@ var nixt = require('nixt'),
   util = require('./util')();
 
 var instanceId = 'helloworld.scxml/helloinstance',
-  resultConf = ['b'];
+  resultConf = ['b'], successString, failString;
+
+// REPL implementation changed greatly after v0.10, this is just a workaround
+// We are not able to test REPL results on v0.10
+switch(process.version.substring(0, 5)) {
+  case 'v0.12':
+  case 'v0.11':
+    successString = function () {
+      return 'scxml >\'' + JSON.stringify(resultConf) + '\'scxml >';
+    };
+    failString = function (fileName) {
+      return 'scxml >ENOENT, open \'' + fileName + '\'scxml >scxml >';
+    };
+    break;
+  case 'v0.10':
+    successString = function () {
+      return 'scxml >';
+    };
+    failString = successString;
+    break;
+  default:
+    console.log('Node version is not supported', process.version);
+    process.exit(1);
+}
 
 describe('SCXML-CLI - interact', function () {
   beforeEach(function(done) {
@@ -33,7 +56,7 @@ describe('SCXML-CLI - interact', function () {
       .expect(util.checkStderr)
       .on('scxml >')
       .respond(commandArg)
-      .stdout('scxml >\'' + JSON.stringify(resultConf) + '\'scxml >')
+      .stdout(successString())
       .end(done);
   }
 
@@ -80,7 +103,7 @@ describe('SCXML-CLI - interact', function () {
       .expect(util.checkStderr)
       .on('scxml >')
       .respond('helloname @' + fileName)
-      .stdout('scxml >ENOENT, open \'' + fileName + '\'scxml >scxml >')
+      .stdout(failString(fileName))
       .end(done);
   });
 
@@ -92,7 +115,7 @@ describe('SCXML-CLI - interact', function () {
       .expect(util.checkStderr)
       .on('scxml >')
       .respond('@' + fileName)
-      .stdout('scxml >ENOENT, open \'' + fileName + '\'scxml >scxml >')
+      .stdout(failString(fileName))
       .end(done);
   });
 });
