@@ -249,19 +249,26 @@ program
   .description('Send an event to a statechart instance.')
   .action(function(instanceId, eventName, eventData, options) {
 
-    parseAndSendEvent(instanceId, eventName, eventData);
+    parseAndSendEvent(instanceId, eventName, eventData, function (err, data) {
+      if(err) logError(err.message || err);
+      else logSuccess('Current:', data.headers.normalized['X-Configuration']);
+    });
   });
 
 function parseAndSendEvent(instanceId, eventName, eventData, done) {
   if(eventName[0] === '@') {
     //event: @data_file.json
-    readJSONFile(eventName.substring(1, eventName.length), function (event) {
+    readJSONFile(eventName.substring(1, eventName.length), function (err, event) {
+      if (err) return done(err);
+
       sendEvent(instanceId, event, done);
     });   
   } else if(eventData) {
     if(eventData[0] === '@') {
       //event: name @data_file.json
-      readJSONFile(eventData.substring(1, eventData.length), function (eventData) {
+      readJSONFile(eventData.substring(1, eventData.length), function (err, eventData) {
+        if (err) return done(err);
+
         sendEvent(instanceId, { name: eventName, data: eventData }, done);
       });
     } else {
@@ -270,7 +277,7 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
         eventData = JSON.parse(eventData);
         sendEvent(instanceId, { name: eventName, data: eventData }, done);
       } catch(err) {
-        logError('Error parsing JSON data', err);
+        return done(err);
       }
     }
   } else {
@@ -280,17 +287,15 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
 
   function readJSONFile (path, done) {
     fs.readFile(path, { encoding: 'utf-8' }, function (err, data) {
-      if (err) {
-        logError('Error reading file', err);
-      }
+      if (err) return done(err);
 
       try {
         data = JSON.parse(data);
       } catch(err) {
-        logError('Error parsing JSON file', err);
+        return done(err);
       }
 
-      done(data);
+      done(null, data);
     });
   }
 
@@ -299,13 +304,9 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
                                       InstanceId: instanceId.split('/')[1],
                                       Event: event
                                     }, function (data) {
-      logSuccess('Current:', data.headers.normalized['X-Configuration']);
-      
-      if(done) done(null, data.headers.normalized['X-Configuration']);
+      done(null, data);
     }, function (data) {
-      logError('Error sending event', data.data.toString());
-
-      if(done) done(data.data.toString());
+      done(data.data.toString());
     });
   }
 }
@@ -335,7 +336,10 @@ program
 
     function runCommand (cmd, context, filename, callback) {
       var event = parseREPL(cmd);
-      parseAndSendEvent(instanceId, event.name, event.data, callback);
+      parseAndSendEvent(instanceId, event.name, event.data, function (err, data) {
+        if(err) callback(err.message || err);
+        else callback(null, data.headers.normalized['X-Configuration']);
+      });
     }
   });
 
