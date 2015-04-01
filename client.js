@@ -384,12 +384,13 @@ program
     var statechartname = statechartnameOrInstanceId.split('/')[0],
       instanceId = statechartnameOrInstanceId.split('/')[1];
 
+    var apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
+
     if(instanceId) {
       var api = swagger.apisArray[0].operationsArray.filter(function (api) {
         return api.nickname === 'getInstanceChanges';
       })[0];
 
-      var apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
       var instanceChangesUrl = apiUrl + api.path.replace('{StateChartName}', statechartname).replace('{InstanceId}', instanceId);
       var es = new EventSource(instanceChangesUrl);
 
@@ -405,7 +406,7 @@ program
       }, false);
 
       es.onerror = function (error) {
-        logError('Error listening to the instance', error);
+        logError('Error listening to the instance ', JSON.stringify(error));
         process.exit(1);
       };
     } else {
@@ -425,7 +426,7 @@ program
       }, false);
 
       es.onerror = function (error) {
-        logError('Error listening to the statechart', error);
+        logError('Error listening to the statechart ', JSON.stringify(error));
         process.exit(1);
       };
     }
