@@ -6,4 +6,4 @@ node_js:
 before_install:
 - npm i -g jshint
 - npm i -g jasmine-node
-- jshint .
+- jshint . 
