@@ -14,7 +14,9 @@ module.exports = function(opts) {
   opts.smaasJSON.host = 'localhost:' + opts.port;
   opts.tempPath = path.resolve(__dirname + '/.tmp/');
   opts.baseApi = '/api/v1/';
-  opts.client = 'node ' + path.resolve(__dirname + '/../client.js') + ' -H http://localhost:' + opts.port + ' ';
+  opts.mainProgram = path.resolve(__dirname + '/../client.js');
+  opts.host = 'http://localhost:' + opts.port;
+  opts.client = 'node ' + opts.mainProgram + ' -H ' + opts.host + ' ';
   
   opts.beforeEach = function (done) {
 
