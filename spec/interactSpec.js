@@ -2,34 +2,11 @@
 // jshint node: true
 /* global describe, beforeEach, afterEach, it, expect */
 
-var nixt = require('nixt'),
+var spawn = require('child_process').spawn,
   util = require('./util')();
 
 var instanceId = 'helloworld.scxml/helloinstance',
-  resultConf = ['b'], successString, failString;
-
-// REPL implementation changed greatly after v0.10, this is just a workaround
-// We are not able to test REPL results on v0.10
-switch(process.version.substring(0, 5)) {
-  case 'v0.12':
-  case 'v0.11':
-    successString = function () {
-      return 'scxml >\'' + JSON.stringify(resultConf) + '\'scxml >';
-    };
-    failString = function (fileName) {
-      return 'scxml >ENOENT, open \'' + fileName + '\'scxml >scxml >';
-    };
-    break;
-  case 'v0.10':
-    successString = function () {
-      return 'scxml >';
-    };
-    failString = successString;
-    break;
-  default:
-    console.log('Node version is not supported', process.version);
-    process.exit(1);
-}
+  resultConf = ['b'];
 
 describe('SCXML-CLI - interact', function () {
   beforeEach(function(done) {
@@ -41,6 +18,8 @@ describe('SCXML-CLI - interact', function () {
   });
 
   function interactSuccess (event, commandArg, done) {
+    var stdout = '', stderr = '';
+
     util.passToTestRunner = function (req, res) {
       expect(req.path).toBe(util.baseApi + instanceId);
       expect(req.method).toBe('POST');
@@ -51,13 +30,45 @@ describe('SCXML-CLI - interact', function () {
       res.sendStatus(200);
     };
 
-    nixt({ colors: false, newlines: false })
-      .run(util.client + 'interact ' + instanceId)
-      .expect(util.checkStderr)
-      .on('scxml >')
-      .respond(commandArg)
-      .stdout(successString())
-      .end(done);
+    var subscribed = spawn('node', [util.mainProgram, '-H', util.host, 'interact', instanceId]);
+    subscribed.stdout.on('data', function (data) { stdout += data; });
+    subscribed.stderr.on('data', function (data) { stderr += data; });
+
+    subscribed.stdin.write(commandArg + '\n');
+
+    setTimeout(function () {
+      expect(stdout).toBe('scxml >\'' + JSON.stringify(resultConf) + '\'\nscxml >');
+      expect(stderr.length).toBe(0);
+      done();
+    }, 1500);
+  }
+
+  function interactFail (fileName, commandArg, done) {
+    var stdout = '', stderr = '', serverCalled = false;
+
+    util.passToTestRunner = function (req, res) {
+      serverCalled = true;
+      res.sendStatus(200);
+    };
+
+    var subscribed = spawn('node', [util.mainProgram, '-H', util.host, 'interact', instanceId]);
+    subscribed.stdout.on('data', function (data) { stdout += data; });
+    subscribed.stderr.on('data', function (data) { stderr += data; });
+
+    subscribed.stdin.write(commandArg + '\n');
+
+    setTimeout(function () {
+      expect(serverCalled).toBe(false);
+      
+      var versionFix = '';
+      if(process.version.substring(0, 5) !== 'v0.10') {
+        versionFix = 'scxml >';
+      }
+
+      expect(stdout).toBe('scxml >ENOENT, open \'' + fileName + '\'\nscxml >' + versionFix);
+      expect(stderr.length).toBe(0);
+      done();
+    }, 1500);
   }
 
   it('should interact and send the event { name: helloname }', function (done) {
@@ -96,26 +107,14 @@ describe('SCXML-CLI - interact', function () {
   });
 
   it('should interact and fail to send the event with missing @eventData.json', function (done) {
-    var fileName = 'eventData.json';
+    var commandArg = 'helloname @eventData.json';
 
-     nixt({ colors: false, newlines: false })
-      .run(util.client + 'interact ' + instanceId)
-      .expect(util.checkStderr)
-      .on('scxml >')
-      .respond('helloname @' + fileName)
-      .stdout(failString(fileName))
-      .end(done);
+    interactFail('eventData.json', commandArg, done);
   });
 
   it('should interact and fail to send the event with missing @event.json', function (done) {
-    var fileName = 'event.json';
+    var commandArg = '@event.json';
 
-     nixt({ colors: false, newlines: false })
-      .run(util.client + 'interact ' + instanceId)
-      .expect(util.checkStderr)
-      .on('scxml >')
-      .respond('@' + fileName)
-      .stdout(failString(fileName))
-      .end(done);
+    interactFail('event.json', commandArg, done);
   });
 });
