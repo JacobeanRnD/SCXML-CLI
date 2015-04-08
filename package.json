@@ -1,8 +1,9 @@
 {
   "name": "scxml-cli",
-  "version": "1.0.0",
+  "version": "0.0.1a",
   "description": "Command-line SMaaS client",
   "main": "client.js",
+  "homepage": "https://github.com/JacobeanRnD/SCXML-CLI",
   "scripts": {
     "test": "jasmine-node spec/ --captureExceptions --verbose --forceexit",
     "postinstall": "bower install"
@@ -11,8 +12,12 @@
   "bin": {
     "scxml": "client.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name" : "Feyzullah Daldal",
+    "email" : "hey@feyzo.net",
+    "url" : "http://feyzo.net/"
+  },
+  "license": "Apache-2.0",
   "dependencies": {
     "atom-shell": "^0.21.3-1",
     "commander": "^2.7.1",
