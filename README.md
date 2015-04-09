@@ -1,5 +1,7 @@
 ## SCXML-CLI
 
+![](https://magnum.travis-ci.com/JacobeanRnD/SCXML-CLI.svg?token=tW6nVvCmQPPuKMxQTSmg&branch=master)
+
 This is the command-line client to SCXMLD, the SCXML orchestration server.
 
 
