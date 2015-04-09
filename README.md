@@ -6,12 +6,16 @@ This is the command-line client to SCXMLD, the SCXML orchestration server.
 ### Installation
 
 ```
-git clone git@github.com:JacobeanRnD/SCXML-CLI.git
-cd SCXML-CLI
-npm install -g .
+npm install -g scxmld scxml-cli
 ```
 
 ### Usage
+
+First, start SCXMLD:
+
+`scxmld`
+
+Then you can use the CLI:
 
 ```
   Usage: scxml [options] [command]
@@ -38,5 +42,7 @@ npm install -g .
     -h, --help  output usage information
 
 ```
+
+### Example
 
 [![asciicast](https://asciinema.org/a/18572.png)](https://asciinema.org/a/18572)
