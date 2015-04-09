@@ -24,6 +24,7 @@
   "devDependencies": {
     "express": "^4.12.3",
     "js-yaml": "^3.2.7",
-    "nixt": "^0.4.1"
+    "nixt": "^0.4.1",
+    "smaas-swagger-spec": "git+ssh://git@github.com:JacobeanRnD/SMaaS-swagger-spec.git"
   }
 }

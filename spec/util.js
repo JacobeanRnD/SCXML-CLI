@@ -4,13 +4,12 @@
 
 var nixt = require('nixt'),
   fs = require('fs'),
-  path = require('path'),
-  yaml = require('js-yaml');
+  path = require('path');
 
 module.exports = function(opts) {
   opts = opts || {};
   opts.port = opts.port || 6002;
-  opts.smaasJSON = yaml.safeLoad(fs.readFileSync(path.resolve(__dirname + '/./../smaas.yml'), 'utf8'));
+  opts.smaasJSON = require('smaas-swagger-spec');
   opts.smaasJSON.host = 'localhost:' + opts.port;
   opts.tempPath = path.resolve(__dirname + '/.tmp/');
   opts.baseApi = '/api/v1/';
