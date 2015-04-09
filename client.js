@@ -10,6 +10,7 @@ var program = require('commander'),
   globwatcher = require('globwatcher').globwatcher,
   swaggerClient = require('swagger-client'),
   EventSource = require('eventsource'),
+  url = require('url'),
   pathNode = require('path');
 
 var suffix = '.scxml';
@@ -39,14 +40,26 @@ switch(process.version.substring(0, 5)) {
 
 function getHostFromArgv(){
   var hostArgIndex =  process.argv.indexOf('-H');
+  
   if(hostArgIndex === -1){
     hostArgIndex = process.argv.indexOf('--host');
   }
+
   if(hostArgIndex > -1){
     var hostOption = process.argv[hostArgIndex + 1];
+    
     process.argv.splice(hostArgIndex, 2);
+
+    var hostUrl = url.parse(hostOption);
+
+    if(hostUrl.auth) {
+      // Example: scxml -H http://username:password@localhost:3000/username save helpers/test1.scxml
+      var userAuth = hostUrl.auth.split(':');
+      swaggerClient.authorizations.add('auth', new swaggerClient.PasswordAuthorization('password', userAuth[0], userAuth[1]));
+    }
+
     return hostOption;
-  }else{
+  } else{
     return 'http://localhost:8002';
   }
 }
