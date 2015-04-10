@@ -11,6 +11,7 @@ var program = require('commander'),
   swaggerClient = require('swagger-client'),
   EventSource = require('eventsource'),
   url = require('url'),
+  http = require('http'),
   pathNode = require('path');
 
 var suffix = '.scxml';
@@ -64,10 +65,43 @@ function getHostFromArgv(){
   }
 }
 
-var swagger = new swaggerClient.SwaggerClient({
-  url: getHostFromArgv() + '/smaas.json',
-  success: onSwaggerSuccess
-});
+var swagger;
+
+// Start the CLI
+checkSwaggerHost(getHostFromArgv() + '/smaas.json');
+
+function checkSwaggerHost(smaasUrl) {
+  var parsedUrl = url.parse(smaasUrl);
+  console.log(parsedUrl);
+
+  // We are checking Smaas.json file beforehand with HEAD request
+  // Because swagger is throwing an async error that we can't catch
+  // And it looks confusing
+  var req = http.request({  method: 'HEAD',
+                            host: parsedUrl.hostname,
+                            port: parsedUrl.port,
+                            path: parsedUrl.path,
+                            auth: parsedUrl.auth
+                          }, function(res) {
+    if(res.statusCode !== 200) {
+      logError('There was an error loading smaas.json at: ' + 
+                  smaasUrl +
+                  ' response ' +
+                  res.statusCode, res.headers);
+    } else {
+      swagger = new swaggerClient.SwaggerClient({
+        url: smaasUrl,
+        success: onSwaggerSuccess
+      }); 
+    }
+  });
+
+  req.on('error', function(e) {
+    logError('There was an error loading smaas.json at: ' + smaasUrl, e);
+  });
+
+  req.end();  
+}
 
 function onSwaggerSuccess () {
   program.parse(process.argv);
