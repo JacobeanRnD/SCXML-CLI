@@ -174,13 +174,13 @@ describe('SCXML-CLI - statecharts', function () {
       expect(req.path).toBe(util.baseApi + '_all_statechart_definitions');
       expect(req.method).toBe('GET');
 
-      res.send(statecharts);
+      res.send({ data: { charts: statecharts }});
     };
 
     nixt({ colors: false, newlines: false })
       .run(util.client + 'ls')
       .expect(util.checkStderr)
-      .stdout('Statechart list:' + JSON.stringify(statecharts))
+      .stdout('Statechart list:' + statecharts.join(''))
       .end(done);
   });
 

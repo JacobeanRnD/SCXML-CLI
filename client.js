@@ -250,13 +250,17 @@ program
 
     if(statechartname) {
       swagger.apis.default.getInstances({ StateChartName: statechartname }, function (data) {
-        logSuccess('Instance list:', data.data.toString());
+        var instanceList = JSON.parse(data.data.toString()).data.instances;
+
+        logSuccess('Instance list:', instanceList.map(function(instance) { return instance.id; }).join('\n'));
       }, function (data) {
         logError('Error getting instance list', data.data.toString());
       });
     } else {
       swagger.apis.default.getStatechartDefinitions({}, function (data) {
-        logSuccess('Statechart list:', data.data.toString());
+        var chartList = JSON.parse(data.data.toString()).data.charts;
+
+        logSuccess('Statechart list:', chartList.join('\n'));
       }, function (data) {
         logError('Error getting statechart list', data.data.toString());
       });

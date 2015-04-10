@@ -15,18 +15,24 @@ describe('SCXML-CLI - instances', function () {
   });
 
   it('should get the list of instances for helloworld.scxml', function (done) {
-    var instances = ['helloworld.scxml/7b5dba0b-3b58-4ffb-ab2f-a5cb6b1bdd58', 'helloworld.scxml/95c43c84-7bd6-4784-8852-1806eaa5972c'];
+    var instances = ['7b5dba0b-3b58-4ffb-ab2f-a5cb6b1bdd58', '95c43c84-7bd6-4784-8852-1806eaa5972c'];
     util.passToTestRunner = function (req, res) {
       expect(req.path).toBe(util.baseApi + 'helloworld.scxml/_all_instances');
       expect(req.method).toBe('GET');
 
-      res.send(instances);
+      res.send({
+        data: {
+          instances: instances.map(function (instance) {
+            return { id: instance }; 
+          })
+        }
+      });
     };
 
     nixt({ colors: false, newlines: false })
       .run(util.client + 'ls helloworld.scxml')
       .expect(util.checkStderr)
-      .stdout('Instance list:' + JSON.stringify(instances))
+      .stdout('Instance list:' + instances.join(''))
       .end(done);
   });
 
