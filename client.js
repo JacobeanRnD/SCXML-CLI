@@ -72,7 +72,6 @@ checkSwaggerHost(getHostFromArgv() + '/smaas.json');
 
 function checkSwaggerHost(smaasUrl) {
   var parsedUrl = url.parse(smaasUrl);
-  console.log(parsedUrl);
 
   // We are checking Smaas.json file beforehand with HEAD request
   // Because swagger is throwing an async error that we can't catch
@@ -86,7 +85,7 @@ function checkSwaggerHost(smaasUrl) {
     if(res.statusCode !== 200) {
       logError('There was an error loading smaas.json at: ' + 
                   smaasUrl +
-                  ' response ' +
+                  ' HTTP response: ' +
                   res.statusCode, res.headers);
     } else {
       swagger = new swaggerClient.SwaggerClient({
