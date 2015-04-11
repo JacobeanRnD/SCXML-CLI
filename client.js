@@ -82,6 +82,8 @@ function checkSwaggerHost(smaasUrl) {
                             path: parsedUrl.path,
                             auth: parsedUrl.auth
                           }, function(res) {
+    res.on('data', function () {});
+    
     if(res.statusCode !== 200) {
       logError('There was an error loading smaas.json at: ' + 
                   smaasUrl +
