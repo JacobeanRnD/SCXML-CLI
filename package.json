@@ -13,9 +13,9 @@
     "scxml": "client.js"
   },
   "author": {
-    "name" : "Feyzullah Daldal",
-    "email" : "hey@feyzo.net",
-    "url" : "http://feyzo.net/"
+    "name": "Feyzullah Daldal",
+    "email": "hey@feyzo.net",
+    "url": "http://feyzo.net/"
   },
   "license": "Apache-2.0",
   "dependencies": {
@@ -30,6 +30,6 @@
     "express": "^4.12.3",
     "js-yaml": "^3.2.7",
     "nixt": "^0.4.1",
-    "smaas-swagger-spec": "git+ssh://git@github.com:JacobeanRnD/SMaaS-swagger-spec.git"
+    "smaas-swagger-spec": "git://github.com/JacobeanRnD/SMaaS-swagger-spec.git"
   }
 }
