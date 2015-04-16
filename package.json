@@ -1,6 +1,6 @@
 {
   "name": "scxml-cli",
-  "version": "0.0.1a",
+  "version": "0.0.2a",
   "description": "Command-line SMaaS client",
   "main": "client.js",
   "homepage": "https://github.com/JacobeanRnD/SCXML-CLI",
