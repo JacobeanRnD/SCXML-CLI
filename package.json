@@ -6,7 +6,7 @@
   "homepage": "https://github.com/JacobeanRnD/SCXML-CLI",
   "scripts": {
     "test": "jasmine-node spec/ --captureExceptions --verbose --forceexit",
-    "postinstall": "bower install"
+    "postinstall": "node node_modules/bower/bin/bower --allow-root install"
   },
   "preferGlobal": true,
   "bin": {
@@ -24,7 +24,8 @@
     "eventsource": "^0.1.6",
     "globwatcher": "^1.4.0",
     "open": "0.0.5",
-    "swagger-client": "^2.1.10-M1"
+    "swagger-client": "^2.1.10-M1",
+    "bower": "~1.4.1"
   },
   "devDependencies": {
     "express": "^4.12.3",
