@@ -1,18 +1,23 @@
 {
   "name": "scxml-cli",
-  "version": "1.0.0",
+  "version": "0.0.1a",
   "description": "Command-line SMaaS client",
   "main": "client.js",
+  "homepage": "https://github.com/JacobeanRnD/SCXML-CLI",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jasmine-node spec/ --captureExceptions --verbose --forceexit",
     "postinstall": "bower install"
   },
   "preferGlobal": true,
   "bin": {
     "scxml": "client.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": {
+    "name": "Feyzullah Daldal",
+    "email": "hey@feyzo.net",
+    "url": "http://feyzo.net/"
+  },
+  "license": "Apache-2.0",
   "dependencies": {
     "atom-shell": "^0.21.3-1",
     "commander": "^2.7.1",
@@ -20,5 +25,11 @@
     "globwatcher": "^1.4.0",
     "open": "0.0.5",
     "swagger-client": "^2.1.10-M1"
+  },
+  "devDependencies": {
+    "express": "^4.12.3",
+    "js-yaml": "^3.2.7",
+    "nixt": "^0.4.1",
+    "smaas-swagger-spec": "git://github.com/JacobeanRnD/SMaaS-swagger-spec.git"
   }
 }

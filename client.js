@@ -1,25 +1,29 @@
 #!/usr/bin/env node
 
+'use strict';
+// jshint node: true
+
 var program = require('commander'),
   fs = require('fs'),
-  open = require('open'),
+  openInBrowser = require('open'),
   repl = require('repl'),
   globwatcher = require('globwatcher').globwatcher,
-  swaggerClient = require("swagger-client"),
+  swaggerClient = require('swagger-client'),
   EventSource = require('eventsource'),
+  url = require('url'),
+  http = require('http'),
   pathNode = require('path');
 
 var suffix = '.scxml';
 
-
 var parseNodeTenREPL = function (cmd) {
   var e = cmd.split(/\((.*)\n\)/)[1].split(/ +/);
   return { name: e[0], data: e[1] };
-}
+};
 var parseNodeElevenREPL = function (cmd) {
   var e = cmd.split(/[\n\r]/g)[0].split(/ +/);
   return { name: e[0], data: e[1] };
-}
+};
 
 var parseREPL;
 switch(process.version.substring(0, 5)) {
@@ -31,28 +35,74 @@ switch(process.version.substring(0, 5)) {
     parseREPL = parseNodeTenREPL;
     break;
   default:
-    logError('Node version is not supported', nodeVersion);
+    logError('Node version is not supported', process.version);
     process.exit(1);
 }
 
 function getHostFromArgv(){
   var hostArgIndex =  process.argv.indexOf('-H');
+  
   if(hostArgIndex === -1){
-    hostArgIndex = process.argv.indexOf('--host')
+    hostArgIndex = process.argv.indexOf('--host');
   }
+
   if(hostArgIndex > -1){
     var hostOption = process.argv[hostArgIndex + 1];
+    
     process.argv.splice(hostArgIndex, 2);
+
+    var hostUrl = url.parse(hostOption);
+
+    if(hostUrl.auth) {
+      // Example: scxml -H http://username:password@localhost:3000/username save helpers/test1.scxml
+      var userAuth = hostUrl.auth.split(':');
+      swaggerClient.authorizations.add('auth', new swaggerClient.PasswordAuthorization('password', userAuth[0], userAuth[1]));
+    }
+
     return hostOption;
-  }else{
+  } else{
     return 'http://localhost:8002';
   }
 }
 
-var swagger = new swaggerClient.SwaggerClient({
-  url: getHostFromArgv() + '/smaas.json',
-  success: onSwaggerSuccess
-});
+var swagger;
+
+// Start the CLI
+checkSwaggerHost(getHostFromArgv() + '/smaas.json');
+
+function checkSwaggerHost(smaasUrl) {
+  var parsedUrl = url.parse(smaasUrl);
+
+  // We are checking Smaas.json file beforehand with HEAD request
+  // Because swagger is throwing an async error that we can't catch
+  // And it looks confusing
+  var req = http.request({  method: 'HEAD',
+                            host: parsedUrl.hostname,
+                            port: parsedUrl.port,
+                            path: parsedUrl.path,
+                            auth: parsedUrl.auth
+                          }, function(res) {
+    res.on('data', function () {});
+    
+    if(res.statusCode !== 200) {
+      logError('There was an error loading smaas.json at: ' + 
+                  smaasUrl +
+                  ' HTTP response: ' +
+                  res.statusCode, res.headers);
+    } else {
+      swagger = new swaggerClient.SwaggerClient({
+        url: smaasUrl,
+        success: onSwaggerSuccess
+      }); 
+    }
+  });
+
+  req.on('error', function(e) {
+    logError('There was an error loading smaas.json at: ' + smaasUrl, e);
+  });
+
+  req.end();  
+}
 
 function onSwaggerSuccess () {
   program.parse(process.argv);
@@ -69,10 +119,12 @@ function onSwaggerSuccess () {
 program
   .command('create <path>')
   .description('Create an scxml file on given path')
-  .action(function(path, options) {
+  .action(function(path) {
     var fileName = pathNode.basename(path);
     fileName = fileName || 'helloworld.scxml';
-    fileName = fileName.indexOf('.scxml') === -1 ? (fileName + '.scxml') : fileName;
+    fileName = fileName.indexOf(suffix) === -1 ? (fileName + suffix) : fileName;
+
+    var finalPath = pathNode.dirname(path) + '/' + fileName;
 
     var fileContent = '<?xml version="1.0" encoding="UTF-8"?>\n' +
                       '<scxml xmlns="http://www.w3.org/2005/07/scxml" name="helloworld" datamodel="ecmascript" version="1.0">\n' +
@@ -87,7 +139,7 @@ program
                       '  </state>\n' +
                       '</scxml>';
 
-    fs.writeFile(fileName, fileContent, 'utf-8', function (err) {
+    fs.writeFile(finalPath, fileContent, 'utf-8', function (err) {
       if (err) {
         logError('Error reading file', err);
         process.exit(1);
@@ -95,7 +147,6 @@ program
 
       logSuccess('Statechart file created locally, StateChartName:', fileName);
     });
-
   });
 
 // scxml save <foo.scxml> -n <StateChartName>
@@ -104,9 +155,9 @@ program
 program
   .command('save <path>')
   .description('Save or update a state machine definition.')
-  .option("-n, --statechartname [name.scxml]", "Specify a name for the state machine definition")
-  .option("-w, --watch", "Watch the scxml file for changes and save automatically.")
-  .option("-h, --handler <path>", "Send along http handler javascript file")
+  .option('-n, --statechartname [name.scxml]', 'Specify a name for the state machine definition')
+  .option('-w, --watch', 'Watch the scxml file for changes and save automatically.')
+  .option('-h, --handler <path>', 'Send along http handler javascript file')
   .action(function(path, options) {
 
     if(options.watch) {      //Watch scxml file
@@ -132,7 +183,7 @@ program
 
         var fileName = pathNode.basename(path);
         var name = options.statechartname || fileName;
-        name = name.indexOf('.scxml') === -1 ? (name + '.scxml') : name;//Add .scxml suffix to all statecharts
+        name = name.indexOf(suffix) === -1 ? (name + suffix) : name;//Add .scxml suffix to all statecharts
 
         if(options.handler) {
           fs.readFile(options.handler, { encoding: 'utf-8' }, function (err, handler) {
@@ -143,11 +194,11 @@ program
 
             //Remove newlines, this helps writing javascript in json files.
             handler = handler.replace(/\n/g, '');
-            var requestOptions = { parameterContentType: "application/json", scxmlWithHandlers: { scxml: definition, handlers: handler }, StateChartName: name };
+            var requestOptions = { parameterContentType: 'application/json', scxmlWithHandlers: { scxml: definition, handlers: handler }, StateChartName: name };
             swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
           });
         } else {
-          var requestOptions = { parameterContentType: "application/xml", scxmlDefinition: definition, StateChartName: name };
+          var requestOptions = { parameterContentType: 'application/xml', scxmlDefinition: definition, StateChartName: name };
 
           swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
         }
@@ -171,7 +222,7 @@ program
 program
   .command('cat <StatechartNameOrInstanceId>')
   .description('Get details of a statechart or an instance')
-  .action(function(statechartnameOrInstanceId, options) {
+  .action(function(statechartnameOrInstanceId) {
 
     var statechartname = statechartnameOrInstanceId.split('/')[0],
       instanceId = statechartnameOrInstanceId.split('/')[1];
@@ -197,17 +248,21 @@ program
 program
   .command('ls [StateChartName]')
   .description('Get list of all statechart definitions or instances')
-  .action(function(statechartname, options) {
+  .action(function(statechartname) {
 
     if(statechartname) {
       swagger.apis.default.getInstances({ StateChartName: statechartname }, function (data) {
-        logSuccess('Instance list:', data.data.toString());
+        var instanceList = JSON.parse(data.data.toString()).data.instances;
+
+        logSuccess('Instance list:', instanceList.map(function(instance) { return instance.id; }).join('\n'));
       }, function (data) {
         logError('Error getting instance list', data.data.toString());
       });
     } else {
       swagger.apis.default.getStatechartDefinitions({}, function (data) {
-        logSuccess('Statechart list:', data.data.toString());
+        var chartList = JSON.parse(data.data.toString()).data.charts;
+
+        logSuccess('Statechart list:', chartList.join('\n'));
       }, function (data) {
         logError('Error getting statechart list', data.data.toString());
       });
@@ -220,7 +275,7 @@ program
 program
   .command('run <StateChartName>')
   .description('Create an instance with the statechart definition.')
-  .option("-n, --instanceId [instanceId]", "Specify an id for the instance")
+  .option('-n, --instanceId [instanceId]', 'Specify an id for the instance')
   .action(function(statechartname, options) {
 
     function onInstanceSuccess (data) {
@@ -246,21 +301,28 @@ program
 program
   .command('send <InstanceId> <eventName> [eventData]')
   .description('Send an event to a statechart instance.')
-  .action(function(instanceId, eventName, eventData, options) {
+  .action(function(instanceId, eventName, eventData) {
 
-    parseAndSendEvent(instanceId, eventName, eventData);
+    parseAndSendEvent(instanceId, eventName, eventData, function (err, data) {
+      if(err) logError(err.message || err);
+      else logSuccess('Current:', data.headers.normalized['X-Configuration']);
+    });
   });
 
 function parseAndSendEvent(instanceId, eventName, eventData, done) {
   if(eventName[0] === '@') {
     //event: @data_file.json
-    readJSONFile(eventName.substring(1, eventName.length), function (event) {
+    readJSONFile(eventName.substring(1, eventName.length), function (err, event) {
+      if (err) return done(err);
+
       sendEvent(instanceId, event, done);
     });   
   } else if(eventData) {
     if(eventData[0] === '@') {
       //event: name @data_file.json
-      readJSONFile(eventData.substring(1, eventData.length), function (eventData) {
+      readJSONFile(eventData.substring(1, eventData.length), function (err, eventData) {
+        if (err) return done(err);
+
         sendEvent(instanceId, { name: eventName, data: eventData }, done);
       });
     } else {
@@ -269,7 +331,7 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
         eventData = JSON.parse(eventData);
         sendEvent(instanceId, { name: eventName, data: eventData }, done);
       } catch(err) {
-        logError('Error parsing JSON data', err);
+        return done(err);
       }
     }
   } else {
@@ -279,34 +341,26 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
 
   function readJSONFile (path, done) {
     fs.readFile(path, { encoding: 'utf-8' }, function (err, data) {
-      if (err) {
-        logError('Error reading file', err);
-      }
+      if (err) return done(err);
 
       try {
         data = JSON.parse(data);
       } catch(err) {
-        logError('Error parsing JSON file', err);
+        return done(err);
       }
 
-      done(data);
+      done(null, data);
     });
   }
 
   function sendEvent(instanceId, event, done) {
-    console.log('Sending event', event);
     swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
                                       InstanceId: instanceId.split('/')[1],
                                       Event: event
                                     }, function (data) {
-      logSuccess('Sent event:', event);
-      logSuccess('Current:', data.headers.normalized['X-Configuration']);
-      
-      if(done) done(null, data.headers.normalized['X-Configuration']);
+      done(null, data);
     }, function (data) {
-      logError('Error sending event', data.data.toString());
-
-      if(done) done(data.data.toString());
+      done(data.data.toString());
     });
   }
 }
@@ -320,7 +374,7 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
 program
   .command('interact <InstanceId>')
   .description('Start REPL interface to send events to a statechart instance.')
-  .action(function(instanceId, options) {
+  .action(function(instanceId) {
       
     if(instanceId.indexOf('/') === -1) {
       logError('Specify an instance id');
@@ -328,7 +382,7 @@ program
     }
 
     repl.start({
-      prompt: "scxml >",
+      prompt: 'scxml >',
       input: process.stdin,
       output: process.stdout,
       eval: runCommand
@@ -336,7 +390,10 @@ program
 
     function runCommand (cmd, context, filename, callback) {
       var event = parseREPL(cmd);
-      parseAndSendEvent(instanceId, event.name, event.data, callback);
+      parseAndSendEvent(instanceId, event.name, event.data, function (err, data) {
+        if(err) callback(err.message || err);
+        else callback(null, data.headers.normalized['X-Configuration']);
+      });
     }
   });
 
@@ -348,19 +405,19 @@ program
 program
   .command('rm <StatechartNameOrInstanceId>')
   .description('Remove a statechart or an instance.')
-  .action(function(statechartnameOrInstanceId, options) {
+  .action(function(statechartnameOrInstanceId) {
 
     var statechartname = statechartnameOrInstanceId.split('/')[0],
       instanceId = statechartnameOrInstanceId.split('/')[1];
 
     if(instanceId) {
-      swagger.apis.default.deleteInstance({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
+      swagger.apis.default.deleteInstance({ StateChartName: statechartname, InstanceId: instanceId }, function () {
         logSuccess('Deleted instance');
       }, function (data) {
         logError('Error deleting instance', data.data.toString());
       });
     } else {
-      swagger.apis.default.deleteStatechartDefinition({ StateChartName: statechartname }, function (data) {
+      swagger.apis.default.deleteStatechartDefinition({ StateChartName: statechartname }, function () {
         logSuccess('Deleted statechart and it\'s children');
       }, function (data) {
         logError('Error deleting statechart', data.data.toString());
@@ -376,19 +433,20 @@ program
 program
   .command('subscribe <StatechartNameOrInstanceId>')
   .description('Listen to changes on a statechart or an instance.')
-  .action(function(statechartnameOrInstanceId, options) {
+  .action(function(statechartnameOrInstanceId) {
 
     var statechartname = statechartnameOrInstanceId.split('/')[0],
-      instanceId = statechartnameOrInstanceId.split('/')[1];
+      instanceId = statechartnameOrInstanceId.split('/')[1],
+      apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath,
+      api, es;
 
     if(instanceId) {
-      var api = swagger.apisArray[0].operationsArray.filter(function (api) {
+      api = swagger.apisArray[0].operationsArray.filter(function (api) {
         return api.nickname === 'getInstanceChanges';
       })[0];
 
-      var apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
       var instanceChangesUrl = apiUrl + api.path.replace('{StateChartName}', statechartname).replace('{InstanceId}', instanceId);
-      var es = new EventSource(instanceChangesUrl);
+      es = new EventSource(instanceChangesUrl);
 
       es.addEventListener('subscribed', function () {
         logSuccess('Started listening to instance changes');
@@ -402,16 +460,16 @@ program
       }, false);
 
       es.onerror = function (error) {
-        logError('Error listening to the instance', error);
+        logError('Error listening to the instance ', JSON.stringify(error));
         process.exit(1);
       };
     } else {
-      var api = swagger.apisArray[0].operationsArray.filter(function (api) {
+      api = swagger.apisArray[0].operationsArray.filter(function (api) {
         return api.nickname === 'getStatechartDefinitionChanges';
       })[0];
 
       var statechartChangesUrl = apiUrl + api.path.replace('{StateChartName}', statechartname);
-      var es = new EventSource(statechartChangesUrl);
+      es = new EventSource(statechartChangesUrl);
 
       es.addEventListener('subscribed', function () {
         logSuccess('Started listening to statechart changes');
@@ -422,7 +480,7 @@ program
       }, false);
 
       es.onerror = function (error) {
-        logError('Error listening to the statechart', error);
+        logError('Error listening to the statechart ', JSON.stringify(error));
         process.exit(1);
       };
     }
@@ -433,7 +491,7 @@ program
 program
   .command('viz <StatechartNameOrInstanceId>')
   .description('Open visualization of the statechart or realtime visualization of the instance.')
-  .option("-b, --browser", "Open the default browser instead of the app")
+  .option('-b, --browser', 'Open the default browser instead of the app')
   .action(function(statechartnameOrInstanceId, options) {
 
     var statechartname = statechartnameOrInstanceId.split('/')[0],
@@ -441,16 +499,16 @@ program
       apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
 
     if(options.browser) {
-      open(apiUrl + '/' + statechartnameOrInstanceId + '/_viz');
+      openInBrowser(apiUrl + '/' + statechartnameOrInstanceId + '/_viz');
     } else {
       var atom = require('atom-shell'),
         childProcess = require('child_process'),
-        options = [__dirname + '/scxmlapp', apiUrl, statechartname];
+        command = [__dirname + '/scxmlapp', apiUrl, statechartname];
 
-      if(instanceId) options.push(instanceId);
+      if(instanceId) command.push(instanceId);
     
       var child = childProcess.spawn( atom,
-                                      options,
+                                      command,
                                       { detached: true, stdio: ['ignore', 'ignore', 'ignore'] });
 
       //Detach the app from this process and get the cli back
@@ -463,10 +521,10 @@ program
 program
   .command('log <InstanceId>')
   .description('Get all events of the instance.')
-  .action(function(instanceId, options) {
+  .action(function(instanceId) {
 
-    var statechartname = instanceId.split('/')[0],
-      instanceId = instanceId.split('/')[1];
+    var statechartname = instanceId.split('/')[0];
+    instanceId = instanceId.split('/')[1];
 
     swagger.apis.default.getEventLog({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
       
@@ -484,14 +542,14 @@ program
 program
   .command('help')
   .description('Print out help')
-  .action(function(env){
+  .action(function(){
     program.outputHelp();
   });
 
 program
   .command('*')
   .description('Print out help')
-  .action(function(env){
+  .action(function(){
     logError('Unrecognized command');
     program.outputHelp();
   });
@@ -503,8 +561,8 @@ function logSuccess (message, obj) {
 
 function logError (message, obj) {
   //Beep sound
-  console.log('\u0007');
+  process.stderr.write('\u0007\n');
 
-  if(message) console.log('\u001b[31mERROR\u001b[0m: ' + message);
-  if(obj) console.log(obj);
+  if(message) process.stderr.write('\u001b[31mERROR\u001b[0m: ' + message + '\n');
+  if(obj) process.stderr.write(obj + '\n');
 }

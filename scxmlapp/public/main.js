@@ -1,7 +1,9 @@
-'use strict';
+// jshint browser: true, jquery:true
+/* global alert, EventSource, require, _ */
 
 $(function() {
-  /* global alert,EventSource */
+  'use strict';
+
   var options;
 
   require('ipc').on('scxml-cli-server-ready', function(opt) {
@@ -16,10 +18,11 @@ $(function() {
     scxmlChangeSource,
     isFirst = true;
 
-  var updateLayout = _.debounce(function(e) {
+  var updateLayout = _.debounce(function() {
     layout.invalidateSize();
   }, 500);
-  window.addEventListener("resize", updateLayout, false);
+
+  window.addEventListener('resize', updateLayout, false);
 
   function getScxml() {
     $.ajax({
@@ -27,14 +30,13 @@ $(function() {
       url: options.apiUrl + '/' + options.statechartName,
       dataType: 'text'
     })
-    .done(function(data, status, xhr) {
+    .done(function(data, status) {
       if (status !== 'success') {
         alert('Error retrieving scxml content:', status);
-        console.log(xhr);
         return;
       }
 
-      drawSimulation(data, function () {
+      drawSimulation(JSON.parse(data).data.scxml, function () {
         if(isFirst) {
           layout.fit();
           isFirst = false;  
@@ -43,7 +45,7 @@ $(function() {
         if(!scxmlChangeSource) {
           scxmlChangeSource = new EventSource(options.apiUrl + '/' + options.statechartName + '/_changes');
 
-          scxmlChangeSource.addEventListener('onChange', function(e) {
+          scxmlChangeSource.addEventListener('onChange', function() {
             getScxml();
           }, false);
         }
@@ -69,14 +71,13 @@ $(function() {
             url: options.apiUrl + '/' + options.statechartName + '/' + options.instanceId,
             dataType: 'json'
           })
-          .done(function(configuration, status, xhr) {
+          .done(function(configuration, status) {
             if (status !== 'success') {
               alert('Error retrieving instance configuration:', status);
-              console.log(xhr);
               return;
             }
 
-            configuration.forEach(highlight.bind(this, 'onEntry'));
+            configuration.data.instance.snapshot.forEach(highlight.bind(this, 'onEntry'));
           });
       }, function (err) {
         alert(err.message);
