@@ -6,9 +6,11 @@
 var program = require('commander'),
   fs = require('fs'),
   openInBrowser = require('open'),
+  request = require('request'),
   repl = require('repl'),
   globwatcher = require('globwatcher').globwatcher,
   swaggerClient = require('swagger-client'),
+  archiver = require('archiver'),
   EventSource = require('eventsource'),
   url = require('url'),
   http = require('http'),
@@ -158,6 +160,7 @@ program
   .option('-n, --statechartname [name.scxml]', 'Specify a name for the state machine definition')
   .option('-w, --watch', 'Watch the scxml file for changes and save automatically.')
   .option('-h, --handler <path>', 'Send along http handler javascript file')
+  .option('-b, --build', 'Build statechart with extra contents looking at "Scxmldfile"')
   .action(function(path, options) {
 
     if(options.watch) {      //Watch scxml file
@@ -185,17 +188,50 @@ program
         var name = options.statechartname || fileName;
         name = name.indexOf(suffix) === -1 ? (name + suffix) : name;//Add .scxml suffix to all statecharts
 
-        if(options.handler) {
-          fs.readFile(options.handler, { encoding: 'utf-8' }, function (err, handler) {
+        if(options.build) {
+          var Scxmldfile = 'Scxmldfile';
+
+          fs.readFile(pathNode.resolve(__dirname + '/' + Scxmldfile), { encoding: 'utf-8' }, function (err, contents) {
             if (err) {
               logError('Error reading file', err);
               process.exit(1);
             }
 
-            //Remove newlines, this helps writing javascript in json files.
-            handler = handler.replace(/\n/g, '');
-            var requestOptions = { parameterContentType: 'application/json', scxmlWithHandlers: { scxml: definition, handlers: handler }, StateChartName: name };
-            swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
+            var archive = archiver.create('tar');
+
+            var buffer = '';
+            
+            archive.on('data', function (data) {
+              buffer += data;
+            });
+
+            archive.on('end', function () {
+              request({
+                method: 'PUT',
+                url: tarballUrl,
+                headers: {
+                  'content-type': 'application/x-tar'
+                },
+                body: buffer
+              });
+            });
+
+            var apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
+            var api = swagger.apisArray[0].operationsArray.filter(function (api) {
+              return api.nickname === 'createOrUpdateStatechartDefinition';
+            })[0];
+
+            var tarballUrl = apiUrl + api.path.replace('{StateChartName}', name);
+
+            var files = contents.split('\n');
+
+            files.forEach(function (fileName) {
+              var file = fs.readFileSync(fileName, 'utf-8');
+
+              archive.append(file, { name : fileName });
+            });
+            
+            archive.finalize();
           });
         } else {
           var requestOptions = { parameterContentType: 'application/xml', scxmlDefinition: definition, StateChartName: name };
