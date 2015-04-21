@@ -6,7 +6,6 @@
 var program = require('commander'),
   fs = require('fs'),
   openInBrowser = require('open'),
-  request = require('request'),
   repl = require('repl'),
   globwatcher = require('globwatcher').globwatcher,
   swaggerClient = require('swagger-client'),
@@ -159,7 +158,6 @@ program
   .description('Save or update a state machine definition.')
   .option('-n, --statechartname [name.scxml]', 'Specify a name for the state machine definition')
   .option('-w, --watch', 'Watch the scxml file for changes and save automatically.')
-  .option('-h, --handler <path>', 'Send along http handler javascript file')
   .option('-b, --build <folderPath>', 'Build statechart with extra contents looking at "Scxmldfile"')
   .action(function(path, options) {
 
@@ -167,12 +165,6 @@ program
       globwatcher(path).on('changed', function() {
         saveContents();
       });
-
-      if(options.handler) {      //Watch handler file
-        globwatcher(options.handler).on('changed', function() {
-          saveContents();
-        });
-      }
     }
 
     saveContents();
@@ -191,31 +183,24 @@ program
         if(options.build) {
           var buildFolder = options.build;
           var archive = archiver.create('tar');
-          var buffer = '';
+          var tarballBuffer = '';
 
           archive.on('data', function (data) {
-            buffer += data;
+            tarballBuffer += data;
           });
-
-          var apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
-          var api = swagger.apisArray[0].operationsArray.filter(function (api) {
-            return api.nickname === 'createOrUpdateStatechartDefinition';
-          })[0];
-
-          var tarballUrl = apiUrl + api.path.replace('{StateChartName}', name);
 
           archive.on('end', function () {
-            request({
-              method: 'PUT',
-              url: tarballUrl,
-              headers: {
-                'content-type': 'application/x-tar'
-              },
-              body: buffer
-            });
+            // Start http request when tar stream is complete
+
+            var requestOptions = { parameterContentType: 'application/x-tar', tarball: tarballBuffer, StateChartName: name };
+
+            swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
           });
 
-          archive.directory(buildFolder, false, { date: new Date() });
+          // Add build folder directly as tar stream
+          archive.directory(buildFolder, false);
+
+          // Done adding files
           archive.finalize();
         } else {
           var requestOptions = { parameterContentType: 'application/xml', scxmlDefinition: definition, StateChartName: name };

@@ -26,7 +26,6 @@
     "eventsource": "^0.1.6",
     "globwatcher": "^1.4.0",
     "open": "0.0.5",
-    "request": "^2.55.0",
     "swagger-client": "^2.1.10-M1"
   },
   "devDependencies": {
