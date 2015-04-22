@@ -59,35 +59,6 @@ describe('SCXML-CLI - statecharts', function () {
     });
   });
 
-  it('should save helloworld.scxml and handler.json', function (done) {
-    var handler = { testhandler: 'testhandlerbody' };
-
-    util.passToTestRunner = function (req, res) {
-      req.body = JSON.parse(req.body);
-      req.body.handlers = JSON.parse(req.body.handlers);
-
-      expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
-      expect(req.method).toBe('PUT');
-      expect(req.headers['content-type']).toBe('application/json');
-      expect(util.read(util.tempPath + '/helloworld.scxml')).toBe(req.body.scxml);
-      expect(req.body.handlers).toEqual(handler);
-
-      res.sendStatus(201);
-    };
-
-    util.createHelloWorld(function () {
-      var result = util.write(util.tempPath + '/helloworld.json', JSON.stringify(handler));
-
-      expect(handler.length).toBe(result);
-
-      //Save created file
-      nixt()
-        .run(util.client + 'save ' + util.tempPath + '/helloworld.scxml -h ' + util.tempPath + '/helloworld.json')
-        .expect(util.checkStderr)
-        .end(done);
-    });
-  });
-
   it('should save helloworld.scxml -w, save on every change', function (done) {
     var stdout = '', stderr = '';
 
@@ -118,18 +89,7 @@ describe('SCXML-CLI - statecharts', function () {
     }, 1000);
   });
 
-  it('should fail to save missing file', function (done) {
-     util.createHelloWorld(function () {
-      nixt()
-        .run(util.client + 'save ' + util.tempPath + '/helloworld.scxml -h missing.json')
-        .expect(function (result) {
-          expect(result.stderr.length).toBeGreaterThan(0);
-        })
-        .end(done);
-    });
-  });
-
-  it('should fail to save missing handler file', function (done) {
+  it('should fail to save missing file file', function (done) {
     nixt()
       .run(util.client + 'save missing.scxml')
       .expect(function (result) {
