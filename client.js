@@ -158,7 +158,7 @@ program
   .description('Save or update a state machine definition.')
   .option('-n, --statechartname [name.scxml]', 'Specify a name for the state machine definition')
   .option('-w, --watch', 'Watch the scxml file for changes and save automatically.')
-  .option('-b, --build <folderPath>', 'Build statechart with extra contents looking at "Scxmldfile"')
+  .option('-b, --build <folderPath>', 'Build folder as a statechart with extra contents. index.scxml is mandatory')
   .action(function(path, options) {
 
     if(options.watch) {      //Watch scxml file
