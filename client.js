@@ -159,17 +159,26 @@ program
   .option('-n, --statechartname [name.scxml]', 'Specify a name for the state machine definition')
   .option('-w, --watch', 'Watch the scxml file for changes and save automatically.')
   .action(function(path, options) {
+    var isFolder = fs.lstatSync(path).isDirectory();
 
-    if(options.watch) {      //Watch scxml file
-      globwatcher(path).on('changed', function() {
-        saveContents();
-      });
+    if(options.watch) {
+      //Watch contents
+      var watchPath = path;
+
+      //If it is a folder, make sure we cover all files
+      if(isFolder) watchPath = pathNode.join(watchPath, '**/*');
+
+      //Listen to all events to cover folders
+      var watcher = globwatcher(watchPath, { emitFolders: true });
+      watcher.on('added', function() { saveContents(); });
+      watcher.on('changed', function() { saveContents(); });
+      watcher.on('deleted', function() { saveContents(); });
     }
 
     saveContents();
 
     function saveContents () {
-      if(fs.lstatSync(path).isDirectory()) {
+      if(isFolder) {
         if(!options.statechartname) {
           //Name is mandatory for tarballs
           logError('Name is mandatory for tarballs. Run the command with "-n statechartname"');
