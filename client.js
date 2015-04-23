@@ -9,6 +9,7 @@ var program = require('commander'),
   repl = require('repl'),
   globwatcher = require('globwatcher').globwatcher,
   swaggerClient = require('swagger-client'),
+  archiver = require('archiver'),
   EventSource = require('eventsource'),
   url = require('url'),
   http = require('http'),
@@ -157,52 +158,81 @@ program
   .description('Save or update a state machine definition.')
   .option('-n, --statechartname [name.scxml]', 'Specify a name for the state machine definition')
   .option('-w, --watch', 'Watch the scxml file for changes and save automatically.')
-  .option('-h, --handler <path>', 'Send along http handler javascript file')
   .action(function(path, options) {
+    var isFolder = fs.lstatSync(path).isDirectory();
 
-    if(options.watch) {      //Watch scxml file
-      globwatcher(path).on('changed', function() {
-        saveContents();
-      });
+    if(options.watch) {
+      //Watch contents
+      var watchPath = path;
 
-      if(options.handler) {      //Watch handler file
-        globwatcher(options.handler).on('changed', function() {
-          saveContents();
-        });
-      }
+      //If it is a folder, make sure we cover all files
+      if(isFolder) watchPath = pathNode.join(watchPath, '**/*');
+
+      //Listen to all events to cover folders
+      var watcher = globwatcher(watchPath, { emitFolders: true });
+      watcher.on('added', function() { saveContents(); });
+      watcher.on('changed', function() { saveContents(); });
+      watcher.on('deleted', function() { saveContents(); });
     }
 
     saveContents();
 
     function saveContents () {
-      fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
-        if (err) {
-          logError('Error reading file', err);
-          process.exit(1);
+      if(isFolder) {
+        if(!options.statechartname) {
+          //Name is mandatory for tarballs
+          logError('Name is mandatory for tarballs. Run the command with "-n statechartname"');
+          return process.exit(1);
         }
 
-        var fileName = pathNode.basename(path);
-        var name = options.statechartname || fileName;
+        var name = options.statechartname;
         name = name.indexOf(suffix) === -1 ? (name + suffix) : name;//Add .scxml suffix to all statecharts
+        var archive = archiver.create('tar');
+        var tarballBuffer = '';
 
-        if(options.handler) {
-          fs.readFile(options.handler, { encoding: 'utf-8' }, function (err, handler) {
-            if (err) {
-              logError('Error reading file', err);
-              process.exit(1);
-            }
+        archive.on('data', function (data) {
+          tarballBuffer += data;
+        });
 
-            //Remove newlines, this helps writing javascript in json files.
-            handler = handler.replace(/\n/g, '');
-            var requestOptions = { parameterContentType: 'application/json', scxmlWithHandlers: { scxml: definition, handlers: handler }, StateChartName: name };
-            swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
-          });
-        } else {
-          var requestOptions = { parameterContentType: 'application/xml', scxmlDefinition: definition, StateChartName: name };
+        archive.on('end', function () {
+          // Start http request when tar stream is complete
+          var requestOptions = {
+            parameterContentType: 'application/x-tar',
+            tarball: tarballBuffer,
+            StateChartName: name
+          };
 
           swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
-        }
-      });
+        });
+
+        // Add build folder directly as tar stream
+        archive.directory(path, false);
+
+        // Done adding files
+        archive.finalize();
+      } else {
+        fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
+          if (err) {
+            logError('Error reading file', err);
+            process.exit(1);
+          }
+
+          var fileName = pathNode.basename(path);
+          var name = options.statechartname || fileName;
+          name = name.indexOf(suffix) === -1 ? (name + suffix) : name;//Add .scxml suffix to all statecharts
+
+          if(options.build) {
+          } else {
+            var requestOptions = {
+              parameterContentType: 'application/xml',
+              scxmlDefinition: definition,
+              StateChartName: name
+            };
+
+            swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
+          }
+        });
+      }
 
       function onStatechartSuccess (data) {
         logSuccess('Statechart saved, StateChartName:', data.headers.normalized.Location);

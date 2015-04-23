@@ -19,13 +19,14 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "archiver": "^0.14.3",
     "atom-shell": "^0.21.3-1",
+    "bower": "~1.4.1",
     "commander": "^2.7.1",
     "eventsource": "^0.1.6",
     "globwatcher": "^1.4.0",
     "open": "0.0.5",
-    "swagger-client": "^2.1.10-M1",
-    "bower": "~1.4.1"
+    "swagger-client": "^2.1.10-M1"
   },
   "devDependencies": {
     "express": "^4.12.3",
