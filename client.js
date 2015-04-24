@@ -198,7 +198,7 @@ program
           // Start http request when tar stream is complete
           var requestOptions = {
             parameterContentType: 'application/x-tar',
-            tarball: tarballBuffer,
+            scxmlContent: tarballBuffer,
             StateChartName: name
           };
 
@@ -225,7 +225,7 @@ program
           } else {
             var requestOptions = {
               parameterContentType: 'application/xml',
-              scxmlDefinition: definition,
+              scxmlContent: definition,
               StateChartName: name
             };
 
@@ -259,13 +259,13 @@ program
 
     if(instanceId) {
       swagger.apis.default.getInstance({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
-        logSuccess('Instance details:', data.data.toString());
+        logSuccess('Instance details:', JSON.parse(data.data.toString()).data.instance.snapshot);
       }, function (data) {
         logError('Error getting instance detail', data.data.toString());
       });
     } else {
       swagger.apis.default.getStatechartDefinition({ StateChartName: statechartname }, function (data) {
-        logSuccess('Statechart details:', data.data.toString());
+        logSuccess('Statechart details:', JSON.parse(data.data.toString()).data.scxml);
       }, function (data) {
         logError('Error getting statechart detail', data.data.toString());
       });
@@ -557,8 +557,7 @@ program
     instanceId = instanceId.split('/')[1];
 
     swagger.apis.default.getEventLog({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
-      
-      var eventLog = JSON.parse(data.data.toString());
+      var eventLog = JSON.parse(data.data.toString()).data.events;
 
       logSuccess('Event log:');
       eventLog.forEach(function (event) {
