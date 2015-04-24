@@ -259,7 +259,7 @@ program
 
     if(instanceId) {
       swagger.apis.default.getInstance({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
-        logSuccess('Instance details:', JSON.parse(data.data.toString()).data.instance.snapshot);
+        logSuccess('Instance details:', JSON.stringify(JSON.parse(data.data.toString()).data.instance.snapshot));
       }, function (data) {
         logError('Error getting instance detail', data.data.toString());
       });

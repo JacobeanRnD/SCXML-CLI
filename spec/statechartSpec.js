@@ -112,7 +112,9 @@ describe('SCXML-CLI - statecharts', function () {
       expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
       expect(req.method).toBe('GET');
 
-      res.send(util.read(util.tempPath + '/helloworld.scxml'));
+      res.send({ data: {
+        scxml: util.read(util.tempPath + '/helloworld.scxml')
+      }});
     };
 
     util.createHelloWorld(function () {

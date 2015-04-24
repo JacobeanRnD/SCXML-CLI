@@ -81,7 +81,11 @@ describe('SCXML-CLI - instances', function () {
       expect(req.path).toBe(util.baseApi + 'helloworld.scxml/helloinstance');
       expect(req.method).toBe('GET');
 
-      res.send(conf);
+      res.send({ data: {
+        instance: {
+          snapshot: conf
+        }
+      } });
     };
 
     nixt({ colors: false, newlines: false })
@@ -112,7 +116,9 @@ describe('SCXML-CLI - instances', function () {
       expect(req.path).toBe(util.baseApi + 'helloworld.scxml/helloinstance/_eventLog');
       expect(req.method).toBe('GET');
 
-      res.send(eventList);
+      res.send({ data: {
+        events: eventList
+      }});
     };
 
     nixt({ colors: false, newlines: false })
