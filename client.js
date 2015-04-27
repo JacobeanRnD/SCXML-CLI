@@ -198,7 +198,7 @@ program
           // Start http request when tar stream is complete
           var requestOptions = {
             parameterContentType: 'application/x-tar',
-            scxmlContent: tarballBuffer,
+            scxmlDefinitionOrTarball: tarballBuffer,
             StateChartName: name
           };
 
@@ -225,7 +225,7 @@ program
           } else {
             var requestOptions = {
               parameterContentType: 'application/xml',
-              scxmlContent: definition,
+              scxmlDefinitionOrTarball: definition,
               StateChartName: name
             };
 
