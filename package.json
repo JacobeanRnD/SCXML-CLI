@@ -17,7 +17,7 @@
     "email": "hey@feyzo.net",
     "url": "http://feyzo.net/"
   },
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0",
   "dependencies": {
     "archiver": "^0.14.3",
     "atom-shell": "^0.21.3-1",
