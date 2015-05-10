@@ -36,7 +36,7 @@ $(function() {
         return;
       }
 
-      drawSimulation(JSON.parse(data).data.scxml, function () {
+      drawSimulation(data, function () {
         if(isFirst) {
           layout.fit();
           isFirst = false;  

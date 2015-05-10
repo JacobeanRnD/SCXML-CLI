@@ -265,7 +265,7 @@ program
       });
     } else {
       swagger.apis.default.getStatechartDefinition({ StateChartName: statechartname }, function (data) {
-        logSuccess('Statechart details:', JSON.parse(data.data.toString()).data.scxml);
+        logSuccess('Statechart details:', data.data.toString());
       }, function (data) {
         logError('Error getting statechart detail', data.data.toString());
       });
