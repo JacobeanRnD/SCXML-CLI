@@ -32,6 +32,6 @@
     "express": "^4.12.3",
     "js-yaml": "^3.2.7",
     "nixt": "^0.4.1",
-    "smaas-swagger-spec": "git://github.com/JacobeanRnD/SMaaS-swagger-spec.git"
+    "smaas-swagger-spec": "git://github.com/JacobeanRnD/SMaaS-swagger-spec.git#6224e17552ca1643d06db64daaf93e300f673527"
   }
 }
