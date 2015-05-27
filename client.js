@@ -150,163 +150,45 @@ program
     });
   });
 
-// scxml save <foo.scxml> -n <StateChartName>
-// node client.js save ./test1.scxml
-// node client.js save -n test2 ./test1.scxml
-program
-  .command('save <path>')
-  .description('Save or update a state machine definition.')
-  .option('-n, --statechartname [name.scxml]', 'Specify a name for the state machine definition')
-  .option('-w, --watch', 'Watch the scxml file for changes and save automatically.')
-  .action(function(path, options) {
-    var isFolder = fs.lstatSync(path).isDirectory();
-
-    if(options.watch) {
-      //Watch contents
-      var watchPath = path;
-
-      //If it is a folder, make sure we cover all files
-      if(isFolder) watchPath = pathNode.join(watchPath, '**/*');
-
-      //Listen to all events to cover folders
-      var watcher = globwatcher(watchPath, { emitFolders: true });
-      watcher.on('added', function() { saveContents(); });
-      watcher.on('changed', function() { saveContents(); });
-      watcher.on('deleted', function() { saveContents(); });
-    }
-
-    saveContents();
-
-    function saveContents () {
-      if(isFolder) {
-        if(!options.statechartname) {
-          //Name is mandatory for tarballs
-          logError('Name is mandatory for tarballs. Run the command with "-n statechartname"');
-          return process.exit(1);
-        }
-
-        var name = options.statechartname;
-        name = name.indexOf(suffix) === -1 ? (name + suffix) : name;//Add .scxml suffix to all statecharts
-        var archive = archiver.create('tar');
-        var tarballBuffer = '';
-
-        archive.on('data', function (data) {
-          tarballBuffer += data;
-        });
-
-        archive.on('end', function () {
-          // Start http request when tar stream is complete
-          var requestOptions = {
-            parameterContentType: 'application/x-tar',
-            scxmlDefinitionOrTarball: tarballBuffer,
-            StateChartName: name
-          };
-
-          swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
-        });
-
-        // Add build folder directly as tar stream
-        archive.directory(path, false);
-
-        // Done adding files
-        archive.finalize();
-      } else {
-        fs.readFile(path, { encoding: 'utf-8' }, function (err, definition) {
-          if (err) {
-            logError('Error reading file', err);
-            process.exit(1);
-          }
-
-          var fileName = pathNode.basename(path);
-          var name = options.statechartname || fileName;
-          name = name.indexOf(suffix) === -1 ? (name + suffix) : name;//Add .scxml suffix to all statecharts
-
-          if(options.build) {
-          } else {
-            var requestOptions = {
-              parameterContentType: 'application/xml',
-              scxmlDefinitionOrTarball: definition,
-              StateChartName: name
-            };
-
-            swagger.apis.default.createOrUpdateStatechartDefinition(requestOptions, onStatechartSuccess, onStatechartError);
-          }
-        });
-      }
-
-      function onStatechartSuccess (data) {
-        logSuccess('Statechart saved, StateChartName:', data.headers.normalized.Location);
-      }
-
-      function onStatechartError (data) {
-        logError('Error saving statechart', data.data.toString());
-      }
-    }
-  });
-
-// scxml cat <StatechartName>
-//or
 // scxml cat <InstanceId>
 // node client.js cat test2
 // node client.js cat test2/testinstance
 program
-  .command('cat <StatechartNameOrInstanceId>')
+  .command('cat <InstanceId>')
   .description('Get details of a statechart or an instance')
-  .action(function(statechartnameOrInstanceId) {
+  .action(function(instanceId) {
 
-    var statechartname = statechartnameOrInstanceId.split('/')[0],
-      instanceId = statechartnameOrInstanceId.split('/')[1];
-
-    if(instanceId) {
-      swagger.apis.default.getInstance({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
-        logSuccess('Instance details:', JSON.stringify(JSON.parse(data.data.toString()).data.instance.snapshot));
-      }, function (data) {
-        logError('Error getting instance detail', data.data.toString());
-      });
-    } else {
-      swagger.apis.default.getStatechartDefinition({ StateChartName: statechartname }, function (data) {
-        logSuccess('Statechart details:', data.data.toString());
-      }, function (data) {
-        logError('Error getting statechart detail', data.data.toString());
-      });
-    }
+    swagger.apis.default.getInstance({ InstanceId: instanceId }, function (data) {
+      logSuccess('Instance details:', JSON.stringify(JSON.parse(data.data.toString()).data.instance.snapshot));
+    }, function (data) {
+      logError('Error getting instance detail', data.data.toString());
+    });
   });
 
-// scxml ls [StateChartName]
+
+// scxml ls 
 // node client.js ls
-// node client.js ls test2
 program
-  .command('ls [StateChartName]')
+  .command('ls')
   .description('Get list of all statechart definitions or instances')
-  .action(function(statechartname) {
+  .action(function() {
+    swagger.apis.default.getInstances({}, function (data) {
+      var instanceList = JSON.parse(data.data.toString()).data.instances;
 
-    if(statechartname) {
-      swagger.apis.default.getInstances({ StateChartName: statechartname }, function (data) {
-        var instanceList = JSON.parse(data.data.toString()).data.instances;
-
-        logSuccess('Instance list:', instanceList.map(function(instance) { return instance.id; }).join('\n'));
-      }, function (data) {
-        logError('Error getting instance list', data.data.toString());
-      });
-    } else {
-      swagger.apis.default.getStatechartDefinitions({}, function (data) {
-        var chartList = JSON.parse(data.data.toString()).data.charts;
-
-        logSuccess('Statechart list:', chartList.join('\n'));
-      }, function (data) {
-        logError('Error getting statechart list', data.data.toString());
-      });
-    }
+      logSuccess('Instance list:', instanceList.map(function(instance) { return instance.id; }).join('\n'));
+    }, function (data) {
+      logError('Error getting instance list', data.data.toString());
+    });
   });
 
-// scxml run <StateChartName> -n <InstanceId>
-// node client.js run test2
-// node client.js run test 2 -n testinstance
+// scxml run -n <InstanceId>
+// node client.js run 
+// node client.js run -n testinstance
 program
-  .command('run <StateChartName>')
+  .command('run')
   .description('Create an instance with the statechart definition.')
   .option('-n, --instanceId [instanceId]', 'Specify an id for the instance')
-  .action(function(statechartname, options) {
+  .action(function(options) {
 
     function onInstanceSuccess (data) {
       logSuccess('Instance created, InstanceId:', data.headers.normalized.Location);
@@ -317,9 +199,9 @@ program
     }
 
     if(options.instanceId) {
-      swagger.apis.default.createNamedInstance({ StateChartName: statechartname, InstanceId: options.instanceId }, onInstanceSuccess, onInstanceError);
+      swagger.apis.default.createNamedInstance({ InstanceId: options.instanceId }, onInstanceSuccess, onInstanceError);
     } else {
-      swagger.apis.default.createInstance({ StateChartName: statechartname }, onInstanceSuccess, onInstanceError);
+      swagger.apis.default.createInstance({}, onInstanceSuccess, onInstanceError);
     }
   });
 
@@ -332,7 +214,6 @@ program
   .command('send <InstanceId> <eventName> [eventData]')
   .description('Send an event to a statechart instance.')
   .action(function(instanceId, eventName, eventData) {
-
     parseAndSendEvent(instanceId, eventName, eventData, function (err, data) {
       if(err) logError(err.message || err);
       else logSuccess('Current:', data.headers.normalized['X-Configuration']);
@@ -384,8 +265,7 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
   }
 
   function sendEvent(instanceId, event, done) {
-    swagger.apis.default.sendEvent({  StateChartName: instanceId.split('/')[0],
-                                      InstanceId: instanceId.split('/')[1],
+    swagger.apis.default.sendEvent({  InstanceId: instanceId,
                                       Event: event
                                     }, function (data) {
       done(null, data);
@@ -406,11 +286,6 @@ program
   .description('Start REPL interface to send events to a statechart instance.')
   .action(function(instanceId) {
       
-    if(instanceId.indexOf('/') === -1) {
-      logError('Specify an instance id');
-      return;
-    }
-
     repl.start({
       prompt: 'scxml >',
       input: process.stdin,
@@ -433,26 +308,14 @@ program
 // node client.js rm test2
 // node client.js rm test2/testinstance
 program
-  .command('rm <StatechartNameOrInstanceId>')
+  .command('rm <InstanceId>')
   .description('Remove a statechart or an instance.')
-  .action(function(statechartnameOrInstanceId) {
-
-    var statechartname = statechartnameOrInstanceId.split('/')[0],
-      instanceId = statechartnameOrInstanceId.split('/')[1];
-
-    if(instanceId) {
-      swagger.apis.default.deleteInstance({ StateChartName: statechartname, InstanceId: instanceId }, function () {
-        logSuccess('Deleted instance');
-      }, function (data) {
-        logError('Error deleting instance', data.data.toString());
-      });
-    } else {
-      swagger.apis.default.deleteStatechartDefinition({ StateChartName: statechartname }, function () {
-        logSuccess('Deleted statechart and it\'s children');
-      }, function (data) {
-        logError('Error deleting statechart', data.data.toString());
-      });
-    }
+  .action(function(instanceId) {
+    swagger.apis.default.deleteInstance({ InstanceId: instanceId }, function () {
+      logSuccess('Deleted instance');
+    }, function (data) {
+      logError('Error deleting instance', data.data.toString());
+    });
   });
 
 // scxml subscribe <InstanceId>
@@ -461,79 +324,54 @@ program
 // node client.js subscribe test2
 // node client.js subscribe test2/testinstance
 program
-  .command('subscribe <StatechartNameOrInstanceId>')
+  .command('subscribe <InstanceId>')
   .description('Listen to changes on a statechart or an instance.')
-  .action(function(statechartnameOrInstanceId) {
+  .action(function(instanceId) {
 
-    var statechartname = statechartnameOrInstanceId.split('/')[0],
-      instanceId = statechartnameOrInstanceId.split('/')[1],
-      apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath,
+    var apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath,
       api, es;
 
-    if(instanceId) {
-      api = swagger.apisArray[0].operationsArray.filter(function (api) {
-        return api.nickname === 'getInstanceChanges';
-      })[0];
+    api = swagger.apisArray[0].operationsArray.filter(function (api) {
+      return api.nickname === 'getInstanceChanges';
+    })[0];
 
-      var instanceChangesUrl = apiUrl + api.path.replace('{StateChartName}', statechartname).replace('{InstanceId}', instanceId);
-      es = new EventSource(instanceChangesUrl);
+    var instanceChangesUrl = apiUrl + api.path.replace('{InstanceId}', instanceId);
+    es = new EventSource(instanceChangesUrl);
 
-      es.addEventListener('subscribed', function () {
-        logSuccess('Started listening to instance changes');
-      }, false);
+    es.addEventListener('subscribed', function () {
+      logSuccess('Started listening to instance changes');
+    }, false);
 
-      es.addEventListener('onEntry', function (e) {
-        console.log(e.type, '-', e.data);
-      }, false);
-      es.addEventListener('onExit', function (e) {
-        console.log(e.type, '-', e.data);
-      }, false);
+    es.addEventListener('onEntry', function (e) {
+      console.log(e.type, '-', e.data);
+    }, false);
+    es.addEventListener('onExit', function (e) {
+      console.log(e.type, '-', e.data);
+    }, false);
 
-      es.onerror = function (error) {
-        logError('Error listening to the instance ', JSON.stringify(error));
-        process.exit(1);
-      };
-    } else {
-      api = swagger.apisArray[0].operationsArray.filter(function (api) {
-        return api.nickname === 'getStatechartDefinitionChanges';
-      })[0];
-
-      var statechartChangesUrl = apiUrl + api.path.replace('{StateChartName}', statechartname);
-      es = new EventSource(statechartChangesUrl);
-
-      es.addEventListener('subscribed', function () {
-        logSuccess('Started listening to statechart changes');
-      }, false);
-
-      es.addEventListener('onChange', function () {
-        console.log('\u001b[32mStatechart changed\u001b[0m');
-      }, false);
-
-      es.onerror = function (error) {
-        logError('Error listening to the statechart ', JSON.stringify(error));
-        process.exit(1);
-      };
-    }
+    es.onerror = function (error) {
+      logError('Error listening to the instance ', JSON.stringify(error));
+      process.exit(1);
+    };
   });
 
 // scxml viz <InstanceId>
 // node client.js viz test2/testinstance
+/*
 program
-  .command('viz <StatechartNameOrInstanceId>')
+  .command('viz <InstanceId>')
   .description('Open visualization of the statechart or realtime visualization of the instance.')
   .option('-b, --browser', 'Open the default browser instead of the app')
-  .action(function(statechartnameOrInstanceId, options) {
+  .action(function(instanceId, options) {
 
-    var statechartname = statechartnameOrInstanceId.split('/')[0],
-      instanceId = statechartnameOrInstanceId.split('/')[1],
-      apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
+    var apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
 
     if(options.browser) {
-      openInBrowser(apiUrl + '/' + statechartnameOrInstanceId + '/_viz');
+      openInBrowser(apiUrl + '/' + instanceId + '/_viz');
     } else {
       var atom = require('atom-shell'),
         childProcess = require('child_process'),
-        command = [__dirname + '/scxmlapp', apiUrl, statechartname];
+        command = [__dirname + '/scxmlapp', apiUrl];
 
       if(instanceId) command.push(instanceId);
     
@@ -545,6 +383,7 @@ program
       child.unref();
     }
   });
+*/
 
 // scxml log <InstanceId>
 // node client.js log test2/testinstance
@@ -553,10 +392,7 @@ program
   .description('Get all events of the instance.')
   .action(function(instanceId) {
 
-    var statechartname = instanceId.split('/')[0];
-    instanceId = instanceId.split('/')[1];
-
-    swagger.apis.default.getEventLog({ StateChartName: statechartname, InstanceId: instanceId }, function (data) {
+    swagger.apis.default.getEventLog({ InstanceId: instanceId }, function (data) {
       var eventLog = JSON.parse(data.data.toString()).data.events;
 
       logSuccess('Event log:');
