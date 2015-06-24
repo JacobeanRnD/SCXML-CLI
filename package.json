@@ -1,6 +1,6 @@
 {
   "name": "scxml-cli",
-  "version": "0.0.2a",
+  "version": "1.0.0",
   "description": "Command-line SMaaS client",
   "main": "client.js",
   "homepage": "https://github.com/JacobeanRnD/SCXML-CLI",
@@ -17,14 +17,12 @@
     "email": "hey@feyzo.net",
     "url": "http://feyzo.net/"
   },
-  "license": "AGPL-3.0",
+  "license": "LGPL-3.0",
   "dependencies": {
-    "archiver": "^0.14.3",
     "atom-shell": "^0.21.3-1",
     "bower": "~1.4.1",
     "commander": "^2.7.1",
     "eventsource": "^0.1.6",
-    "globwatcher": "^1.4.0",
     "open": "0.0.5",
     "swagger-client": "^2.1.10-M1"
   },
@@ -32,6 +30,6 @@
     "express": "^4.12.3",
     "js-yaml": "^3.2.7",
     "nixt": "^0.4.1",
-    "smaas-swagger-spec": "git://github.com/JacobeanRnD/SMaaS-swagger-spec.git#6224e17552ca1643d06db64daaf93e300f673527"
+    "smaas-swagger-spec": "^1.0.1",
   }
 }
