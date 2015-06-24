@@ -1,16 +1,16 @@
 {
-  "name": "scxml-cli",
+  "name": "smaas-cli",
   "version": "1.0.0",
   "description": "Command-line SMaaS client",
   "main": "client.js",
-  "homepage": "https://github.com/JacobeanRnD/SCXML-CLI",
+  "homepage": "https://github.com/JacobeanRnD/smaas-cli",
   "scripts": {
     "test": "jasmine-node spec/ --captureExceptions --verbose --forceexit",
     "postinstall": "node node_modules/bower/bin/bower --allow-root install"
   },
   "preferGlobal": true,
   "bin": {
-    "scxml": "client.js"
+    "smaas-cli": "client.js"
   },
   "author": {
     "name": "Feyzullah Daldal",
