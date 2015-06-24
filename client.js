@@ -173,7 +173,7 @@ program
     swagger.apis.default.getInstances({}, function (data) {
       var instanceList = JSON.parse(data.data.toString()).data.instances;
 
-      logSuccess('Instance list:', instanceList.map(function(instance) { return instance.id; }).join('\n'));
+      logSuccess('Instance list:', instanceList.join('\n'));
     }, function (data) {
       logError('Error getting instance list', data.data.toString());
     });
