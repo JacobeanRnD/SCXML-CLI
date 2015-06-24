@@ -357,7 +357,6 @@ program
 
 // scxml viz <InstanceId>
 // node client.js viz test2/testinstance
-/*
 program
   .command('viz <InstanceId>')
   .description('Open visualization of the statechart or realtime visualization of the instance.')
@@ -383,7 +382,6 @@ program
       child.unref();
     }
   });
-*/
 
 // scxml log <InstanceId>
 // node client.js log test2/testinstance

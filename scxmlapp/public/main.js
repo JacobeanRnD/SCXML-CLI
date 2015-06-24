@@ -27,7 +27,7 @@ $(function() {
   function getScxml() {
     $.ajax({
       type: 'GET',
-      url: options.apiUrl + '/' + options.statechartName,
+      url: options.apiUrl,
       dataType: 'text'
     })
     .done(function(data, status) {
@@ -43,7 +43,7 @@ $(function() {
         }
 
         if(!scxmlChangeSource) {
-          scxmlChangeSource = new EventSource(options.apiUrl + '/' + options.statechartName + '/_changes');
+          scxmlChangeSource = new EventSource(options.apiUrl + '/_changes');
 
           scxmlChangeSource.addEventListener('onChange', function() {
             getScxml();
@@ -55,7 +55,7 @@ $(function() {
         }
 
         if (!eventChangeSource) {
-          eventChangeSource = new EventSource(options.apiUrl + '/' + options.statechartName + '/' + options.instanceId + '/_changes');
+          eventChangeSource = new EventSource(options.apiUrl + '/' + options.instanceId + '/_changes');
 
           eventChangeSource.addEventListener('onEntry', function(e) {
             highlight('onEntry', e.data);
@@ -68,7 +68,7 @@ $(function() {
 
         $.ajax({
             type: 'GET',
-            url: options.apiUrl + '/' + options.statechartName + '/' + options.instanceId,
+            url: options.apiUrl + '/' + options.instanceId,
             dataType: 'json'
           })
           .done(function(configuration, status) {
