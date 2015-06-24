@@ -30,6 +30,6 @@
     "express": "^4.12.3",
     "js-yaml": "^3.2.7",
     "nixt": "^0.4.1",
-    "smaas-swagger-spec": "^1.0.1",
+    "smaas-swagger-spec": "^1.0.1"
   }
 }
