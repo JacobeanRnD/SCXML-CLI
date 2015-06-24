@@ -38,5 +38,10 @@ Then you can use the CLI:
   Options:
 
     -h, --help  output usage information
-
 ```
+
+### Remote client
+
+SMaaS-CLI can interact with SMaaS servers deployed to the cloud, e.g.
+
+`smaas-cli -H http://my-app.herokuapp.com ls`
