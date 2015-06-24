@@ -42,14 +42,6 @@ $(function() {
           isFirst = false;  
         }
 
-        if(!scxmlChangeSource) {
-          scxmlChangeSource = new EventSource(options.apiUrl + '/_changes');
-
-          scxmlChangeSource.addEventListener('onChange', function() {
-            getScxml();
-          }, false);
-        }
-
         if(!options.instanceId) {
           return;
         }

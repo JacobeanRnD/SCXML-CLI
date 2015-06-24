@@ -28,8 +28,7 @@ app.on('ready', function() {
   mainWindow.webContents.on('did-finish-load', function() {
     mainWindow.webContents.send('scxml-cli-server-ready', {
       apiUrl: process.argv[2],
-      statechartName: process.argv[3],
-      instanceId: process.argv[4]
+      instanceId: process.argv[3]
     });
   });
 
