@@ -62,16 +62,6 @@ describe('SCXML-CLI - subscribe', function () {
 
   }
 
-  it('should get statechart changes', function (done) {
-    var result = ['Started listening to statechart changes', 'Statechart changed'];
-    var actions = [ function (res) {
-      res.write('event: onChange\n');
-      res.write('data:\n\n');
-    }];
-
-    subsribeTest('helloworld.scxml', actions, result, done);
-  });
-
   it('should get instance changes', function (done) {
     var result = ['Started listening to instance changes', 'onEntry - processing', 'onExit - initial'];
     var actions = [ function (res) {
@@ -82,6 +72,6 @@ describe('SCXML-CLI - subscribe', function () {
       res.write('data: initial\n\n');
     }];
 
-    subsribeTest('helloworld.scxml/helloinstance', actions, result, done);
+    subsribeTest('helloinstance', actions, result, done);
   });
 });

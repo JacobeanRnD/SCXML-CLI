@@ -1,3 +1,5 @@
+[![Build status](https://travis-ci.org/JacobeanRnD/smaas-cli.svg?branch=master)](https://travis-ci.org/JacobeanRnD/smaas-cli)
+
 
 This is the command-line client to expresscion, the SCXML orchestration server.
 

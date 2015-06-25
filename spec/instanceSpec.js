@@ -17,22 +17,20 @@ describe('SCXML-CLI - instances', function () {
   it('should get the list of instances for helloworld.scxml', function (done) {
     var instances = ['7b5dba0b-3b58-4ffb-ab2f-a5cb6b1bdd58', '95c43c84-7bd6-4784-8852-1806eaa5972c'];
     util.passToTestRunner = function (req, res) {
-      expect(req.path).toBe(util.baseApi + 'helloworld.scxml/_all_instances');
+      expect(req.path).toBe(util.baseApi + '_all_instances');
       expect(req.method).toBe('GET');
 
       res.send({
         data: {
-          instances: instances.map(function (instance) {
-            return { id: instance }; 
-          })
+          instances: instances
         }
       });
     };
 
-    nixt({ colors: false, newlines: false })
-      .run(util.client + 'ls helloworld.scxml')
+    nixt({ colors: false, newlines: true })
+      .run(util.client + 'ls')
       .expect(util.checkStderr)
-      .stdout('Instance list:' + instances.join(''))
+      .stdout('Instance list:\n' + instances.join('\n'))
       .end(done);
   });
 
@@ -40,18 +38,18 @@ describe('SCXML-CLI - instances', function () {
     var instanceName = 'helloinstance';
 
     util.passToTestRunner = function (req, res) {
-      expect(req.path).toBe(util.baseApi + 'helloworld.scxml');
+      expect(req.path).toBe(util.baseApi);
       expect(req.method).toBe('POST');
 
-      res.setHeader('Location', 'helloworld.scxml/' + instanceName);
+      res.setHeader('Location', instanceName);
 
       res.sendStatus(201);
     };
 
     nixt({ colors: false, newlines: false })
-      .run(util.client + 'run helloworld.scxml')
+      .run(util.client + 'run')
       .expect(util.checkStderr)
-      .stdout('Instance created, InstanceId:helloworld.scxml/' + instanceName)
+      .stdout('Instance created, InstanceId:' + instanceName)
       .end(done);
   });
 
@@ -59,18 +57,18 @@ describe('SCXML-CLI - instances', function () {
     var instanceName = 'helloinstance';
 
     util.passToTestRunner = function (req, res) {
-      expect(req.path).toBe(util.baseApi + 'helloworld.scxml/' + instanceName);
+      expect(req.path).toBe(util.baseApi + instanceName);
       expect(req.method).toBe('PUT');
 
-      res.setHeader('Location', 'helloworld.scxml/' + instanceName);
+      res.setHeader('Location', instanceName);
 
       res.sendStatus(201);
     };
 
     nixt({ colors: false, newlines: false })
-      .run(util.client + 'run helloworld.scxml -n ' + instanceName)
+      .run(util.client + 'run -n ' + instanceName)
       .expect(util.checkStderr)
-      .stdout('Instance created, InstanceId:helloworld.scxml/' + instanceName)
+      .stdout('Instance created, InstanceId:' + instanceName)
       .end(done);
   });
 
