@@ -1,6 +1,6 @@
 {
   "name": "smaas-cli",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Command-line SMaaS client",
   "main": "client.js",
   "homepage": "https://github.com/JacobeanRnD/smaas-cli",
@@ -29,6 +29,6 @@
     "express": "^4.12.3",
     "js-yaml": "^3.2.7",
     "nixt": "^0.4.1",
-    "smaas-swagger-spec": "^1.0.1"
+    "smaas-swagger-spec": "2.0.0"
   }
 }
