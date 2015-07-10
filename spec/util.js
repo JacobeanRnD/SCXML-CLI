@@ -30,7 +30,7 @@ module.exports = function(opts) {
     });
 
     //Serve swagger client API
-    app.get('/smaas.json', function (req, res) {
+    app.get('/api/v3/smaas.json', function (req, res) {
       res.status(200).send(opts.smaasJSON);
     });
 
