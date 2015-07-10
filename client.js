@@ -60,14 +60,14 @@ function getHostFromArgv(){
 
     return hostOption;
   } else{
-    return 'http://localhost:8002';
+    return 'http://localhost:3000';
   }
 }
 
 var swagger;
 
 // Start the CLI
-checkSwaggerHost(getHostFromArgv() + '/smaas.json');
+checkSwaggerHost(getHostFromArgv() + '/api/v3/smaas.json');
 
 function checkSwaggerHost(smaasUrl) {
   var parsedUrl = url.parse(smaasUrl);
@@ -156,7 +156,7 @@ program
   .description('Get details of a statechart or an instance')
   .action(function(instanceId) {
 
-    swagger.apis.default.getInstance({ InstanceId: instanceId }, function (data) {
+    swagger.apis.scxml.getInstance({ InstanceId: instanceId }, function (data) {
       logSuccess('Instance details:', JSON.stringify(JSON.parse(data.data.toString()).data.instance.snapshot));
     }, function (data) {
       logError('Error getting instance detail', data.data.toString());
@@ -170,7 +170,7 @@ program
   .command('ls')
   .description('Get list of all statechart definitions or instances')
   .action(function() {
-    swagger.apis.default.getInstances({}, function (data) {
+    swagger.apis.scxml.getInstances({}, function (data) {
       var instanceList = JSON.parse(data.data.toString()).data.instances;
 
       logSuccess('Instance list:', instanceList.join('\n'));
@@ -197,9 +197,9 @@ program
     }
 
     if(options.instanceId) {
-      swagger.apis.default.createNamedInstance({ InstanceId: options.instanceId }, onInstanceSuccess, onInstanceError);
+      swagger.apis.scxml.createNamedInstance({ InstanceId: options.instanceId }, onInstanceSuccess, onInstanceError);
     } else {
-      swagger.apis.default.createInstance({}, onInstanceSuccess, onInstanceError);
+      swagger.apis.scxml.createInstance({}, onInstanceSuccess, onInstanceError);
     }
   });
 
@@ -263,7 +263,7 @@ function parseAndSendEvent(instanceId, eventName, eventData, done) {
   }
 
   function sendEvent(instanceId, event, done) {
-    swagger.apis.default.sendEvent({  InstanceId: instanceId,
+    swagger.apis.scxml.sendEvent({  InstanceId: instanceId,
                                       Event: event
                                     }, function (data) {
       done(null, data);
@@ -309,7 +309,7 @@ program
   .command('rm <InstanceId>')
   .description('Remove a statechart or an instance.')
   .action(function(instanceId) {
-    swagger.apis.default.deleteInstance({ InstanceId: instanceId }, function () {
+    swagger.apis.scxml.deleteInstance({ InstanceId: instanceId }, function () {
       logSuccess('Deleted instance');
     }, function (data) {
       logError('Error deleting instance', data.data.toString());
@@ -358,27 +358,11 @@ program
 program
   .command('viz <InstanceId>')
   .description('Open visualization of the statechart or realtime visualization of the instance.')
-  .option('-b, --browser', 'Open the default browser instead of the app')
   .action(function(instanceId, options) {
 
-    var apiUrl = swagger.scheme + '://' + swagger.host + swagger.basePath;
+    var apiUrl = swagger.scheme + '://' + swagger.host;
 
-    if(options.browser) {
-      openInBrowser(apiUrl + '/' + instanceId + '/_viz');
-    } else {
-      var atom = require('atom-shell'),
-        childProcess = require('child_process'),
-        command = [__dirname + '/scxmlapp', apiUrl];
-
-      if(instanceId) command.push(instanceId);
-    
-      var child = childProcess.spawn( atom,
-                                      command,
-                                      { detached: true, stdio: ['ignore', 'ignore', 'ignore'] });
-
-      //Detach the app from this process and get the cli back
-      child.unref();
-    }
+    openInBrowser(apiUrl + '/' + instanceId + '/_viz');
   });
 
 // scxml log <InstanceId>
@@ -388,7 +372,7 @@ program
   .description('Get all events of the instance.')
   .action(function(instanceId) {
 
-    swagger.apis.default.getEventLog({ InstanceId: instanceId }, function (data) {
+    swagger.apis.scxml.getEventLog({ InstanceId: instanceId }, function (data) {
       var eventLog = JSON.parse(data.data.toString()).data.events;
 
       logSuccess('Event log:');
