@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 'use strict';
 // jshint node: true
 
@@ -7,7 +5,7 @@ var program = require('commander'),
   fs = require('fs'),
   openInBrowser = require('open'),
   repl = require('repl'),
-  swaggerClient = require('swagger-client'),
+  SwaggerClient = require('swagger-client'),
   EventSource = require('eventsource'),
   url = require('url'),
   http = require('http'),
@@ -34,8 +32,11 @@ switch(process.version.substring(0, 5)) {
     parseREPL = parseNodeTenREPL;
     break;
   default:
-    logError('Node version is not supported', process.version);
-    process.exit(1);
+    logError('WARNING: "interact" command may be unstable for this version of node', process.version);
+    //TODO: add support for node 4.2.2 and 5.x
+    parseREPL = parseNodeElevenREPL;
+    break;
+
 }
 
 function getHostFromArgv(){
@@ -89,7 +90,7 @@ function checkSwaggerHost(smaasUrl) {
                   ' HTTP response: ' +
                   res.statusCode, res.headers);
     } else {
-      swagger = new swaggerClient.SwaggerClient({
+      swagger = new SwaggerClient({
         url: smaasUrl,
         success: onSwaggerSuccess
       }); 
@@ -189,7 +190,7 @@ program
   .action(function(options) {
 
     function onInstanceSuccess (data) {
-      logSuccess('Instance created, InstanceId:', data.headers.normalized.Location);
+      logSuccess('Instance created, InstanceId:', data.headers.location);
     }
 
     function onInstanceError (data) {
@@ -214,7 +215,7 @@ program
   .action(function(instanceId, eventName, eventData) {
     parseAndSendEvent(instanceId, eventName, eventData, function (err, data) {
       if(err) logError(err.message || err);
-      else logSuccess('Current:', data.headers.normalized['X-Configuration']);
+      else logSuccess('Current:', data.headers['x-configuration']);
     });
   });
 
@@ -295,7 +296,7 @@ program
       var event = parseREPL(cmd);
       parseAndSendEvent(instanceId, event.name, event.data, function (err, data) {
         if(err) callback(err.message || err);
-        else callback(null, data.headers.normalized['X-Configuration']);
+        else callback(null, data.headers['x-configuration']);
       });
     }
   });
