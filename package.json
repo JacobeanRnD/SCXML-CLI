@@ -10,7 +10,7 @@
   },
   "preferGlobal": true,
   "bin": {
-    "smaas-cli": "client.js"
+    "smaas-cli": "./client.js"
   },
   "author": {
     "name": "Feyzullah Daldal",

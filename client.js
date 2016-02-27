@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 'use strict';
 // jshint node: true
 
@@ -12,32 +14,6 @@ var program = require('commander'),
   pathNode = require('path');
 
 var suffix = '.scxml';
-
-var parseNodeTenREPL = function (cmd) {
-  var e = cmd.split(/\((.*)\n\)/)[1].split(/ +/);
-  return { name: e[0], data: e[1] };
-};
-var parseNodeElevenREPL = function (cmd) {
-  var e = cmd.split(/[\n\r]/g)[0].split(/ +/);
-  return { name: e[0], data: e[1] };
-};
-
-var parseREPL;
-switch(process.version.substring(0, 5)) {
-  case 'v0.12':
-  case 'v0.11':
-    parseREPL = parseNodeElevenREPL;
-    break;
-  case 'v0.10':
-    parseREPL = parseNodeTenREPL;
-    break;
-  default:
-    logError('WARNING: "interact" command may be unstable for this version of node', process.version);
-    //TODO: add support for node 4.2.2 and 5.x
-    parseREPL = parseNodeElevenREPL;
-    break;
-
-}
 
 function getHostFromArgv(){
   var hostArgIndex =  process.argv.indexOf('-H');
@@ -85,10 +61,11 @@ function checkSwaggerHost(smaasUrl) {
     res.on('data', function () {});
     
     if(res.statusCode !== 200) {
+      console.log('here');
       logError('There was an error loading smaas.json at: ' + 
                   smaasUrl +
                   ' HTTP response: ' +
-                  res.statusCode, res.headers);
+                  res.statusCode, res.headers, 'Is SMaaS server running?');
     } else {
       swagger = new SwaggerClient({
         url: smaasUrl,
@@ -98,7 +75,7 @@ function checkSwaggerHost(smaasUrl) {
   });
 
   req.on('error', function(e) {
-    logError('There was an error loading smaas.json at: ' + smaasUrl, e);
+    logError('There was an error loading smaas.json at: ' + smaasUrl, e, 'Is SMaaS server running?');
   });
 
   req.end();  
@@ -150,18 +127,26 @@ program
   });
 
 // scxml cat <InstanceId>
-// node client.js cat test2
-// node client.js cat test2/testinstance
+// node client.js cat 
+// node client.js cat testinstance
 program
-  .command('cat <InstanceId>')
+  .command('cat [InstanceId]')
   .description('Get details of a statechart or an instance')
   .action(function(instanceId) {
 
-    swagger.apis.scxml.getInstance({ InstanceId: instanceId }, function (data) {
-      logSuccess('Instance details:', JSON.stringify(JSON.parse(data.data.toString()).data.instance.snapshot));
-    }, function (data) {
-      logError('Error getting instance detail', data.data.toString());
-    });
+    if(instanceId){
+      swagger.apis.scxml.getInstance({ InstanceId: instanceId }, function (data) {
+        logSuccess('Instance details:', JSON.stringify(JSON.parse(data.data.toString()).data.instance.snapshot));
+      }, function (data) {
+        logError('Error getting instance detail', data.data.toString());
+      });
+    } else {
+      swagger.apis.scxml.getStatechartDefinition(function(data){
+        logSuccess('Statechart details:', data.data.toString());
+      }, function (data) {
+        logError('Error getting statechart definition', data.data.toString());
+      });
+    }
   });
 
 
@@ -181,13 +166,11 @@ program
   });
 
 // scxml run -n <InstanceId>
-// node client.js run 
-// node client.js run -n testinstance
+// node client.js run [instanceId]
 program
-  .command('run')
+  .command('run [instanceId]')
   .description('Create an instance with the statechart definition.')
-  .option('-n, --instanceId [instanceId]', 'Specify an id for the instance')
-  .action(function(options) {
+  .action(function(instanceId) {
 
     function onInstanceSuccess (data) {
       logSuccess('Instance created, InstanceId:', data.headers.location);
@@ -197,8 +180,8 @@ program
       logError('Error on instance creation', data.data.toString());
     }
 
-    if(options.instanceId) {
-      swagger.apis.scxml.createNamedInstance({ InstanceId: options.instanceId }, onInstanceSuccess, onInstanceError);
+    if(instanceId) {
+      swagger.apis.scxml.createNamedInstance({ InstanceId: instanceId }, onInstanceSuccess, onInstanceError);
     } else {
       swagger.apis.scxml.createInstance({}, onInstanceSuccess, onInstanceError);
     }
@@ -284,7 +267,35 @@ program
   .command('interact <InstanceId>')
   .description('Start REPL interface to send events to a statechart instance.')
   .action(function(instanceId) {
-      
+
+
+
+    var parseNodeTenREPL = function (cmd) {
+      var e = cmd.split(/\((.*)\n\)/)[1].split(/ +/);
+      return { name: e[0], data: e[1] };
+    };
+    var parseNodeElevenREPL = function (cmd) {
+      var e = cmd.split(/[\n\r]/g)[0].split(/ +/);
+      return { name: e[0], data: e[1] };
+    };
+
+    var parseREPL;
+    switch(process.version.substring(0, 5)) {
+      case 'v0.12':
+      case 'v0.11':
+        parseREPL = parseNodeElevenREPL;
+        break;
+      case 'v0.10':
+        parseREPL = parseNodeTenREPL;
+        break;
+      default:
+        logError('WARNING: "interact" command may be unstable for this version of node', process.version);
+        //TODO: add support for node 4.2.2 and 5.x
+        parseREPL = parseNodeElevenREPL;
+        break;
+
+    }
+
     repl.start({
       prompt: 'scxml >',
       input: process.stdin,
@@ -401,14 +412,15 @@ program
   });
 
 function logSuccess (message, obj) {
-  if(message) console.log('\u001b[32m' + message + '\u001b[0m');
+  if(message) console.error('\u001b[32m' + message + '\u001b[0m');
   if(obj) console.log(obj);
 }
 
-function logError (message, obj) {
+function logError (message, obj, obj2) {
   //Beep sound
   process.stderr.write('\u0007\n');
 
   if(message) process.stderr.write('\u001b[31mERROR\u001b[0m: ' + message + '\n');
   if(obj) process.stderr.write(obj + '\n');
+  if(obj2) process.stderr.write(obj2 + '\n');
 }
